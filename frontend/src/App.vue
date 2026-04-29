@@ -1,33 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { NButton, NIcon, NInput, NTag } from 'naive-ui'
+import { NButton, NIcon, NTag } from 'naive-ui'
 import {
   AddOutline,
   CheckmarkDoneOutline,
   ChevronBackOutline,
-  ChevronDownOutline,
   ChevronForwardOutline,
-  DocumentTextOutline,
-  HelpCircleOutline,
-  MailOutline,
-  MenuOutline,
-  NotificationsOutline,
-  ReaderOutline,
-  SearchOutline,
-  SettingsOutline,
-  SparklesOutline,
-  StarOutline,
-  StatsChartOutline,
 } from '@vicons/ionicons5'
 import { apiRequest } from './api'
 import {
-  displayEventType,
-  displayProfileName,
-  displayProviderType,
-  displayReadinessSection,
-  displayRuntimeMode,
   displayStatus,
-  displayStorageBackend,
   pageFromPath,
   requiresAuth,
   type PageName,
@@ -41,12 +23,14 @@ import { useWorkspaceActions } from './composables/useWorkspaceActions'
 import { useWorkspaceDashboard } from './composables/useWorkspaceDashboard'
 import { useWorkspaceData } from './composables/useWorkspaceData'
 import LoginPage from './components/LoginPage.vue'
+import SettingsPage from './components/SettingsPage.vue'
 import StudioPage from './components/StudioPage.vue'
+import WorkbenchPage from './components/WorkbenchPage.vue'
+import WorkspaceShell from './components/WorkspaceShell.vue'
 import {
   calendarDays,
   chartLines,
   weekDays,
-  workspaceNavItems,
 } from './workspaceConfig'
 import {
   createDefaultBibleForm,
@@ -244,6 +228,10 @@ function selectWorkspaceProject(projectId: string) {
   navigateTo('workbench')
 }
 
+function openCreateProjectModal() {
+  showCreateProjectModal.value = true
+}
+
 async function login() {
   if (!canLoginSubmit.value) return
   busy.value = true
@@ -323,88 +311,27 @@ onUnmounted(() => {
     @notice="setNotice"
   />
 
-  <main v-else-if="requiresAuth(currentPage) && token" class="workspace-page">
-    <aside class="sidebar">
-      <button class="workspace-brand" type="button" @click="navigateTo('studio')">
-        <span class="logo-mark">
-          <n-icon :component="ReaderOutline" />
-        </span>
-        <span>
-          <strong>aonarr</strong>
-          <em>小说创作与自动连载平台</em>
-        </span>
-      </button>
-
-      <nav class="side-nav" aria-label="工作台导航">
-        <button
-          v-for="item in workspaceNavItems"
-          :key="item.label"
-          :class="{ active: isWorkspaceNavActive(item) }"
-          type="button"
-          @click="handleWorkspaceNav(item)"
-        >
-          <n-icon :component="item.icon" />
-          <span>{{ item.label }}</span>
-          <em v-if="item.badge">{{ item.badge }}</em>
-        </button>
-      </nav>
-
-      <section class="plan-card">
-        <div class="crown">
-          <n-icon :component="StarOutline" />
-        </div>
-        <strong>自托管原型</strong>
-        <span>{{ displayStorageBackend(runtimeSettings?.storage_backend) }} · 模型 {{ llmModeLabel }}</span>
-        <n-button type="primary" block @click="loadWorkspace">刷新状态</n-button>
-      </section>
-    </aside>
-
-    <section class="workspace-main">
-      <header class="topbar">
-        <n-button quaternary circle aria-label="展开导航">
-          <template #icon>
-            <n-icon :component="MenuOutline" />
-          </template>
-        </n-button>
-
-        <n-input class="global-search" placeholder="搜索作品、章节、提示词..." round>
-          <template #prefix>
-            <n-icon :component="SearchOutline" />
-          </template>
-          <template #suffix>
-            <kbd>⌘ K</kbd>
-          </template>
-        </n-input>
-
-        <div class="top-actions">
-          <n-button quaternary circle aria-label="通知" @click="openEventStream">
-            <template #icon>
-              <n-icon :component="NotificationsOutline" />
-            </template>
-          </n-button>
-          <n-button quaternary circle aria-label="站内信" @click="loadEvents">
-            <template #icon>
-              <n-icon :component="MailOutline" />
-            </template>
-          </n-button>
-          <n-button quaternary circle aria-label="帮助" @click="navigateTo('settings')">
-            <template #icon>
-              <n-icon :component="HelpCircleOutline" />
-            </template>
-          </n-button>
-
-          <button class="user-menu" type="button" @click="logout">
-            <span class="avatar">S</span>
-            <span>
-              <strong>{{ username }}</strong>
-              <em>退出登录</em>
-            </span>
-            <n-icon :component="ChevronDownOutline" />
-          </button>
-        </div>
-      </header>
-
-      <section v-if="currentPage === 'index'" class="content">
+  <WorkspaceShell
+    v-else-if="requiresAuth(currentPage) && token"
+    v-model:show-create-project-modal="showCreateProjectModal"
+    :busy="busy"
+    :current-page="currentPage"
+    :llm-mode-label="llmModeLabel"
+    :new-project-form="newProjectForm"
+    :runtime-settings="runtimeSettings"
+    :settings-panel="settingsPanel"
+    :username="username"
+    :workbench-main-panel="workbenchMainPanel"
+    :workbench-side-panel="workbenchSidePanel"
+    @create-project="createProject"
+    @load-events="loadEvents"
+    @logout="logout"
+    @navigate="navigateTo"
+    @open-event-stream="openEventStream"
+    @refresh="loadWorkspace"
+    @workspace-nav="handleWorkspaceNav"
+  >
+    <section v-if="currentPage === 'index'" class="content">
         <div class="welcome-row">
           <div>
             <h1>下午好，{{ username }} <span>👋</span></h1>
@@ -598,329 +525,52 @@ onUnmounted(() => {
 
       </section>
 
-      <section v-else-if="currentPage === 'workbench'" class="content workbench-content">
-        <div class="workspace-breadcrumb">
-          <button type="button" @click="navigateTo('index')">
-            <n-icon :component="ChevronBackOutline" />
-            返回工作台
-          </button>
-          <select v-if="projects.length" v-model="selectedProjectId" @change="handleProjectSelection">
-            <option v-for="project in projects" :key="project.id" :value="project.id">
-              {{ project.title }} · {{ displayStatus(project.status) }}
-            </option>
-          </select>
-          <n-button secondary type="primary" @click="showCreateProjectModal = true">新建作品</n-button>
-        </div>
+    <WorkbenchPage
+      v-else-if="currentPage === 'workbench'"
+      v-model:selected-project-id="selectedProjectId"
+      v-model:selected-run-id="selectedRunId"
+      v-model:workbench-main-panel="workbenchMainPanel"
+      v-model:workbench-side-panel="workbenchSidePanel"
+      :accepted-drafts="acceptedDrafts"
+      :bible-form="bibleForm"
+      :busy="busy"
+      :drafts="drafts"
+      :events="events"
+      :notice="notice"
+      :plans="plans"
+      :project-form="projectForm"
+      :projects="projects"
+      :readiness="readiness"
+      :run-form="runForm"
+      :runs="runs"
+      :selected-project="selectedProject"
+      :selected-run="selectedRun"
+      @export-markdown="exportMarkdown"
+      @load-events="loadEvents"
+      @load-project-data="loadProjectData"
+      @navigate-index="navigateTo('index')"
+      @open-create-project="openCreateProjectModal"
+      @open-event-stream="openEventStream"
+      @run-action="runAction"
+      @save-bible="saveBible"
+      @set-draft-status="setDraftStatus"
+      @set-notice="setNotice"
+      @start-run="startRun"
+      @update-project-selection="handleProjectSelection"
+    />
 
-        <div v-if="!selectedProject" class="empty-state panel">
-          <h2>先选择或创建一个作品</h2>
-          <p>生产工作台是单本书的生产空间，用来配置故事设定、启动自动连载、审阅草稿和查看运行日志。</p>
-          <n-button type="primary" @click="showCreateProjectModal = true">创建作品</n-button>
-        </div>
-
-        <section v-else class="workbench-layout">
-          <aside class="panel chapter-rail">
-            <div class="panel-head">
-              <h2>{{ selectedProject.title }}</h2>
-              <button type="button" @click="loadProjectData()">刷新</button>
-            </div>
-            <div class="run-progress-card">
-              <span>当前运行</span>
-              <strong>{{ selectedRun ? displayStatus(selectedRun.status) : '未启动' }}</strong>
-              <p>{{ selectedRun ? `${selectedRun.completed_chapter_count}/${selectedRun.target_chapter_count} 章 · $${selectedRun.estimated_cost}` : '创建运行后开始监听进度' }}</p>
-            </div>
-            <div class="chapter-list">
-              <button
-                v-for="plan in plans"
-                :key="plan.id"
-                type="button"
-                :class="{ active: workbenchMainPanel === 'plans' }"
-                @click="workbenchMainPanel = 'plans'"
-              >
-                <span>第{{ plan.chapter_number }}章</span>
-                <strong>{{ plan.title_hint }}</strong>
-                <em>{{ displayStatus(plan.status) }}</em>
-              </button>
-              <button
-                v-for="draft in drafts"
-                :key="draft.id"
-                type="button"
-                :class="{ active: workbenchMainPanel === 'drafts' }"
-                @click="workbenchMainPanel = 'drafts'"
-              >
-                <span>第{{ draft.chapter_number }}章</span>
-                <strong>{{ draft.title }}</strong>
-                <em>{{ displayStatus(draft.status) }}</em>
-              </button>
-            </div>
-          </aside>
-
-          <section class="workbench-center">
-            <div class="workbench-tabs">
-              <button :class="{ active: workbenchMainPanel === 'run' }" type="button" @click="workbenchMainPanel = 'run'">生产驾驶舱</button>
-              <button :class="{ active: workbenchMainPanel === 'plans' }" type="button" @click="workbenchMainPanel = 'plans'">章节计划</button>
-              <button :class="{ active: workbenchMainPanel === 'drafts' }" type="button" @click="workbenchMainPanel = 'drafts'">草稿审阅</button>
-              <button :class="{ active: workbenchMainPanel === 'events' }" type="button" @click="workbenchMainPanel = 'events'">运行日志</button>
-            </div>
-
-            <article v-if="workbenchMainPanel === 'run'" class="panel cockpit-panel">
-              <div class="panel-head">
-                <h2>生产驾驶舱</h2>
-                <button type="button" @click="openEventStream">连接实时日志</button>
-              </div>
-              <div class="cockpit-grid">
-                <div class="engine-box">
-                  <h3>运行目标</h3>
-                  <label>
-                    目标章节
-                    <input v-model.number="runForm.target_chapter_count" type="number" min="1" />
-                  </label>
-                  <label>
-                    成本上限
-                    <input v-model.number="runForm.cost_limit" type="number" min="0" step="0.01" />
-                  </label>
-                  <select v-if="runs.length" v-model="selectedRunId" @change="loadEvents()">
-                    <option v-for="run in runs" :key="run.id" :value="run.id">
-                      {{ displayStatus(run.status) }} · {{ run.completed_chapter_count }}/{{ run.target_chapter_count }} · ${{ run.estimated_cost }}
-                    </option>
-                  </select>
-                </div>
-                <div class="run-meter">
-                  <strong>{{ selectedRun ? Math.round((selectedRun.completed_chapter_count / Math.max(selectedRun.target_chapter_count, 1)) * 100) : 0 }}%</strong>
-                  <span>{{ selectedRun ? displayStatus(selectedRun.status) : '待启动' }}</span>
-                  <p>已完成 {{ selectedRun?.completed_chapter_count ?? 0 }} / {{ selectedRun?.target_chapter_count ?? runForm.target_chapter_count }} 章</p>
-                </div>
-                <div class="engine-box">
-                  <h3>控制</h3>
-                  <div class="button-row">
-                    <button class="primary-button" type="button" :disabled="busy || !selectedProject" @click="startRun">启动</button>
-                    <button class="ghost-button" type="button" :disabled="!selectedRun" @click="runAction('pause')">暂停</button>
-                    <button class="ghost-button" type="button" :disabled="!selectedRun" @click="runAction('resume')">继续</button>
-                    <button class="ghost-button" type="button" :disabled="!selectedRun" @click="runAction('cancel')">取消</button>
-                  </div>
-                  <p class="panel-note">{{ notice }}</p>
-                </div>
-              </div>
-            </article>
-
-            <article v-else-if="workbenchMainPanel === 'plans'" class="panel">
-              <div class="panel-head">
-                <h2>章节计划</h2>
-                <button type="button" @click="loadProjectData()">刷新计划</button>
-              </div>
-              <div class="plan-list">
-                <article v-for="plan in plans" :key="plan.id" class="plan-row">
-                  <span>第{{ plan.chapter_number }}章 · {{ displayStatus(plan.status) }}</span>
-                  <h3>{{ plan.title_hint }}</h3>
-                  <p>{{ plan.goal }}</p>
-                  <p>{{ plan.conflict }}</p>
-                  <em>{{ plan.hook }}</em>
-                </article>
-              </div>
-            </article>
-
-            <article v-else-if="workbenchMainPanel === 'drafts'" class="panel">
-              <div class="panel-head">
-                <h2>草稿审阅</h2>
-                <button type="button" :disabled="!acceptedDrafts.length" @click="exportMarkdown">导出文稿</button>
-              </div>
-              <article v-for="draft in drafts" :key="draft.id" class="draft-card">
-                <h3>{{ draft.title }}</h3>
-                <div class="draft-meta">
-                  <span>{{ displayStatus(draft.status) }}</span>
-                  <span v-if="draft.quality_score !== undefined && draft.quality_score !== null">评分 {{ draft.quality_score }}</span>
-                  <span>版本 {{ draft.version }}</span>
-                </div>
-                <div class="button-row">
-                  <button class="small-button" type="button" :disabled="busy" @click="setDraftStatus(draft, 'accepted')">通过</button>
-                  <button class="small-button" type="button" :disabled="busy" @click="setDraftStatus(draft, 'needs_revision')">需要修订</button>
-                  <button class="small-button" type="button" :disabled="busy" @click="setDraftStatus(draft, 'rejected')">拒绝</button>
-                </div>
-                <p v-if="draft.review_summary" class="review-summary">{{ draft.review_summary }}</p>
-                <p>{{ draft.body }}</p>
-              </article>
-            </article>
-
-            <article v-else class="panel">
-              <div class="panel-head">
-                <h2>运行日志</h2>
-                <button type="button" @click="loadEvents()">刷新日志</button>
-              </div>
-              <div class="event-log">
-                <article v-for="event in events" :key="event.id" class="event-row">
-                  <span>{{ displayEventType(event.event_type) }}</span>
-                  <p>{{ event.message }}</p>
-                  <small>{{ event.created_at }}</small>
-                </article>
-              </div>
-            </article>
-          </section>
-
-          <aside class="panel settings-side-panel">
-            <div class="panel-head">
-              <h2>作品资料</h2>
-              <button type="button" @click="workbenchSidePanel = 'export'">导出</button>
-            </div>
-            <div class="workbench-tabs side-tabs">
-              <button :class="{ active: workbenchSidePanel === 'bible' }" type="button" @click="workbenchSidePanel = 'bible'">故事设定</button>
-              <button :class="{ active: workbenchSidePanel === 'project' }" type="button" @click="workbenchSidePanel = 'project'">项目设定</button>
-              <button :class="{ active: workbenchSidePanel === 'export' }" type="button" @click="workbenchSidePanel = 'export'">导出</button>
-            </div>
-            <div v-if="workbenchSidePanel === 'bible'" class="side-panel-body">
-              <textarea v-model="bibleForm.premise" placeholder="故事前提"></textarea>
-              <textarea v-model="bibleForm.world_summary" placeholder="世界观摘要"></textarea>
-              <textarea v-model="bibleForm.tone_profile" placeholder="文风设定"></textarea>
-              <button class="primary-button" type="button" :disabled="!selectedProject" @click="saveBible">保存故事设定</button>
-              <div v-if="readiness" class="readiness" :class="{ ready: readiness.ready }">
-                <strong>{{ readiness.ready ? '可以开始运行' : '尚未就绪' }}</strong>
-                <p v-for="item in readiness.missing" :key="item.section">{{ displayReadinessSection(item.section) }}：{{ item.message }}</p>
-              </div>
-            </div>
-            <div v-else-if="workbenchSidePanel === 'project'" class="side-panel-body">
-              <input v-model="projectForm.title" placeholder="作品名称" />
-              <input v-model="projectForm.genre" placeholder="作品类型" />
-              <input v-model.number="projectForm.target_chapter_count" type="number" />
-              <input v-model.number="projectForm.target_words_per_chapter" type="number" />
-              <textarea v-model="projectForm.style_goal" placeholder="风格目标"></textarea>
-              <button class="ghost-button" type="button" @click="setNotice('当前版本先支持创建时写入项目设定')">保存项目设定</button>
-            </div>
-            <div v-else class="side-panel-body">
-              <strong>文稿导出</strong>
-              <p>导出当前项目已通过章节，适合进入后续排版或发布流程。</p>
-              <button class="primary-button" type="button" :disabled="!acceptedDrafts.length" @click="exportMarkdown">导出文稿</button>
-            </div>
-          </aside>
-        </section>
-      </section>
-
-      <section v-else-if="currentPage === 'settings'" class="content settings-content">
-        <div class="welcome-row">
-          <div>
-            <h1>系统设置</h1>
-            <p>模型配置、提示词模板和运行环境从作品首页拆出，集中在这里维护。</p>
-          </div>
-          <n-button secondary type="primary" @click="loadWorkspace">刷新设置</n-button>
-        </div>
-
-        <section class="settings-layout">
-          <aside class="panel settings-nav-panel">
-            <button :class="{ active: settingsPanel === 'llm' }" type="button" @click="settingsPanel = 'llm'">
-              <n-icon :component="SparklesOutline" />
-              模型配置
-            </button>
-            <button :class="{ active: settingsPanel === 'prompts' }" type="button" @click="settingsPanel = 'prompts'">
-              <n-icon :component="DocumentTextOutline" />
-              提示词模板
-            </button>
-            <button :class="{ active: settingsPanel === 'runtime' }" type="button" @click="settingsPanel = 'runtime'">
-              <n-icon :component="StatsChartOutline" />
-              运行环境
-            </button>
-          </aside>
-
-          <section class="panel settings-detail-panel">
-            <div v-if="settingsPanel === 'llm'" class="settings-section">
-              <div class="panel-head">
-                <h2>模型配置</h2>
-                <button type="button" @click="loadWorkspace">刷新</button>
-              </div>
-              <div class="settings-two-column">
-                <div class="engine-box">
-                  <h3>创建模型配置</h3>
-                  <input v-model="llmForm.name" placeholder="配置名称" />
-                  <input v-model="llmForm.base_url" placeholder="接口地址" />
-                  <input v-model="llmForm.model" placeholder="模型名称" />
-                  <input v-model="llmForm.api_key" placeholder="接口密钥" type="password" />
-                  <button class="primary-button" type="button" @click="createLLMProfile">创建模型</button>
-                </div>
-                <div class="profile-list">
-                  <button v-for="profile in llmProfiles" :key="profile.id" type="button" @click="testLLM(profile.id)">
-                    <strong>{{ displayProfileName(profile.name) }}</strong>
-                    <span>{{ displayProviderType(profile.provider_type) }} · {{ profile.model }}</span>
-                    <em>{{ displayStatus(profile.status) }}</em>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div v-else-if="settingsPanel === 'prompts'" class="settings-section">
-              <div class="panel-head">
-                <h2>提示词中心</h2>
-                <button type="button" @click="loadWorkspace">刷新模板</button>
-              </div>
-              <article v-for="template in promptTemplates" :key="template.id" class="template-card">
-                <div class="template-header">
-                  <div>
-                    <h3>{{ template.name }}</h3>
-                    <p>{{ template.id }} · {{ template.purpose }}</p>
-                  </div>
-                  <div class="button-row">
-                    <button class="small-button" type="button" @click="savePromptTemplate(template)">保存</button>
-                    <button class="small-button" type="button" @click="resetPromptTemplate(template.id)">重置</button>
-                  </div>
-                </div>
-                <input v-model="template.name" placeholder="模板名称" />
-                <input v-model="template.purpose" placeholder="用途说明" />
-                <label>
-                  系统提示词
-                  <textarea v-model="template.system_template"></textarea>
-                </label>
-                <label>
-                  用户提示词
-                  <textarea v-model="template.user_template"></textarea>
-                </label>
-                <div class="form-grid two">
-                  <input v-model.number="template.temperature" type="number" min="0" max="2" step="0.1" />
-                  <input v-model.number="template.max_tokens" type="number" min="1" placeholder="最大 Token 数" />
-                </div>
-                <small>{{ template.required_variables.join(', ') }}</small>
-              </article>
-            </div>
-
-            <div v-else class="settings-section">
-              <div class="panel-head">
-                <h2>运行环境</h2>
-                <button type="button" @click="loadWorkspace">刷新</button>
-              </div>
-              <div class="runtime-grid">
-                <article>
-                  <span>模型调用模式</span>
-                  <strong>{{ displayRuntimeMode(runtimeSettings?.llm_mode) }}</strong>
-                </article>
-                <article>
-                  <span>存储后端</span>
-                  <strong>{{ displayStorageBackend(runtimeSettings?.storage_backend) }}</strong>
-                </article>
-                <article>
-                  <span>自动修订次数</span>
-                  <strong>{{ runtimeSettings?.revision_max_attempts ?? 0 }}</strong>
-                </article>
-                <article>
-                  <span>模型配置数</span>
-                  <strong>{{ llmProfiles.length }}</strong>
-                </article>
-              </div>
-            </div>
-          </section>
-        </section>
-      </section>
-
-      <div v-if="showCreateProjectModal" class="workspace-modal-backdrop" @click.self="showCreateProjectModal = false">
-        <section class="workspace-modal">
-          <div class="panel-head">
-            <h2>创建新作品</h2>
-            <button type="button" @click="showCreateProjectModal = false">关闭</button>
-          </div>
-          <div class="side-panel-body">
-            <input v-model="newProjectForm.title" placeholder="作品名称" />
-            <input v-model="newProjectForm.genre" placeholder="作品类型" />
-            <input v-model.number="newProjectForm.target_chapter_count" type="number" min="1" />
-            <input v-model.number="newProjectForm.target_words_per_chapter" type="number" min="1" />
-            <textarea v-model="newProjectForm.style_goal" placeholder="风格目标"></textarea>
-            <button class="primary-button" type="button" :disabled="busy" @click="createProject">创建并进入生产工作台</button>
-          </div>
-        </section>
-      </div>
-    </section>
-  </main>
+    <SettingsPage
+      v-else-if="currentPage === 'settings'"
+      v-model:settings-panel="settingsPanel"
+      :llm-form="llmForm"
+      :llm-profiles="llmProfiles"
+      :prompt-templates="promptTemplates"
+      :runtime-settings="runtimeSettings"
+      @create-l-l-m-profile="createLLMProfile"
+      @refresh="loadWorkspace"
+      @reset-prompt-template="resetPromptTemplate"
+      @save-prompt-template="savePromptTemplate"
+      @test-l-l-m="testLLM"
+    />
+  </WorkspaceShell>
 </template>
