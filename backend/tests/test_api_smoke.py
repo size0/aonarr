@@ -130,12 +130,20 @@ def test_prompt_templates() -> None:
     assert response.status_code == 200
     templates = response.json()["data"]
     expected_template_ids = {
+        "serial_outline",
         "serial_plan",
         "serial_draft",
         "serial_review",
         "serial_revision",
     }
     assert {template["id"] for template in templates} >= expected_template_ids
+    template_by_id = {template["id"]: template for template in templates}
+    assert "Workflow stage: SERIAL_OUTLINE" in template_by_id["serial_outline"]["user_template"]
+    assert "第X卷：卷名" in template_by_id["serial_outline"]["user_template"]
+    assert "Workflow stage: CHAPTER_PLAN" in template_by_id["serial_plan"]["user_template"]
+    assert "context_dependencies" in template_by_id["serial_plan"]["user_template"]
+    assert "Quality gate:" in template_by_id["serial_review"]["user_template"]
+    assert "Revision rules:" in template_by_id["serial_revision"]["user_template"]
 
     patch_response = client.patch(
         "/api/v1/prompt-templates/serial_plan",

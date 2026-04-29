@@ -32,6 +32,22 @@ assert number_value("8.6", 0) == 8.6
 assert number_value("99", 0) == 10
 assert bool_value("accepted", False) is True
 assert bool_value("rejected", True) is False
+outline_prompt = render_prompt_template(
+    "serial_outline",
+    {
+        "project_title": "A",
+        "genre": "Fantasy",
+        "style_goal": "Fast",
+        "target_chapter_count": 300,
+        "target_words_per_chapter": 2000,
+        "outline_range": "Full book",
+        "bible_context": "Premise: test",
+        "existing_outline_context": "None",
+    },
+)
+assert "senior web-novel architect" in outline_prompt["messages"][0]["content"]
+assert "Workflow stage: SERIAL_OUTLINE" in outline_prompt["messages"][1]["content"]
+assert "第X卷：卷名" in outline_prompt["messages"][1]["content"]
 prompt = render_prompt_template(
     "serial_plan",
     {
@@ -44,7 +60,10 @@ prompt = render_prompt_template(
     },
 )
 assert prompt["messages"][0]["role"] == "system"
+assert "senior web-novel story editor" in prompt["messages"][0]["content"]
 assert "Project title: A" in prompt["messages"][1]["content"]
+assert "Workflow stage: CHAPTER_PLAN" in prompt["messages"][1]["content"]
+assert "context_dependencies" in prompt["messages"][1]["content"]
 revision_prompt = render_prompt_template(
     "serial_revision",
     {
@@ -62,5 +81,6 @@ revision_prompt = render_prompt_template(
     },
 )
 assert "Review feedback: Needs stronger hook." in revision_prompt["messages"][1]["content"]
+assert "Revision rules:" in revision_prompt["messages"][1]["content"]
 
 print("unit_check_ok")
