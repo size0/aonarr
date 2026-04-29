@@ -13,6 +13,7 @@ from app.core.config import get_settings
 from app.core.security import new_token, utc_after, utc_now
 from app.core.store import store
 from app.main import app, create_app
+from app.services.prompt_templates import prompt_template_variables
 
 client = TestClient(app)
 
@@ -138,6 +139,9 @@ def test_prompt_templates() -> None:
     }
     assert {template["id"] for template in templates} >= expected_template_ids
     template_by_id = {template["id"]: template for template in templates}
+    for template_id in expected_template_ids:
+        template = template_by_id[template_id]
+        assert set(template["required_variables"]) == prompt_template_variables(template)
     assert "Workflow stage: SERIAL_OUTLINE" in template_by_id["serial_outline"]["user_template"]
     assert "第X卷：卷名" in template_by_id["serial_outline"]["user_template"]
     assert "Workflow stage: CHAPTER_PLAN" in template_by_id["serial_plan"]["user_template"]

@@ -323,6 +323,12 @@ def template_variables(template: str) -> set[str]:
     return {field_name for _, field_name, _, _ in Formatter().parse(template) if field_name}
 
 
+def prompt_template_variables(template: dict[str, Any]) -> set[str]:
+    return template_variables(template.get("system_template", "")) | template_variables(
+        template.get("user_template", "")
+    )
+
+
 def render_text(template: str, variables: dict[str, Any]) -> str:
     rendered = template
     for key, value in variables.items():
@@ -336,6 +342,10 @@ def render_prompt_template(template_id: str, variables: dict[str, Any]) -> dict[
         raise KeyError(template_id)
     system_template = template.get("system_template", "")
     user_template = template.get("user_template", "")
+    missing_variables = prompt_template_variables(template) - set(variables)
+    if missing_variables:
+        missing = ", ".join(sorted(missing_variables))
+        raise KeyError(f"Missing prompt variables for {template_id}: {missing}")
     return {
         "messages": [
             {"role": "system", "content": render_text(system_template, variables)},

@@ -8,7 +8,11 @@ _tmp_data = tempfile.TemporaryDirectory()
 os.environ["DATA_DIR"] = _tmp_data.name
 
 from app.services.llm_client import LLMClientError, completion_url, estimate_cost, parse_json_object
-from app.services.prompt_templates import render_prompt_template
+from app.services.prompt_templates import (
+    DEFAULT_PROMPT_TEMPLATES,
+    prompt_template_variables,
+    render_prompt_template,
+)
 from app.services.serial_engine import bool_value, number_value
 
 
@@ -32,6 +36,8 @@ assert number_value("8.6", 0) == 8.6
 assert number_value("99", 0) == 10
 assert bool_value("accepted", False) is True
 assert bool_value("rejected", True) is False
+for template in DEFAULT_PROMPT_TEMPLATES:
+    assert set(template["required_variables"]) == prompt_template_variables(template)
 outline_prompt = render_prompt_template(
     "serial_outline",
     {
@@ -82,5 +88,13 @@ revision_prompt = render_prompt_template(
 )
 assert "Review feedback: Needs stronger hook." in revision_prompt["messages"][1]["content"]
 assert "Revision rules:" in revision_prompt["messages"][1]["content"]
+
+try:
+    render_prompt_template("serial_plan", {"project_title": "A"})
+except KeyError as exc:
+    assert "chapter_number" in str(exc)
+    assert "bible_context" in str(exc)
+else:
+    raise AssertionError("render_prompt_template should reject missing variables")
 
 print("unit_check_ok")
