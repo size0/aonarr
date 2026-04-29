@@ -1,0 +1,57 @@
+services:
+  backend:
+    build:
+      context: ../backend
+    environment:
+      APP_ENV: development
+      APP_NAME: SerialWriter Engine
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: change-me
+      SECRET_KEY: change-me
+      DATA_DIR: /app/local-data
+      STORAGE_BACKEND: json
+      DATABASE_URL: postgresql://serial_writer:change-me@postgres:5432/serial_writer
+      CORS_ORIGINS: http://localhost:5173
+      LLM_MODE: mock
+      LLM_REQUEST_TIMEOUT_SECONDS: 30
+      REVISION_MAX_ATTEMPTS: 1
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_data:/app/local-data
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    build:
+      context: ../frontend
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: serial_writer
+      POSTGRES_USER: serial_writer
+      POSTGRES_PASSWORD: change-me
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  backend_data:
+  postgres_data:
+  redis_data:
