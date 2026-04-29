@@ -63,6 +63,7 @@ const {
   syncProjectFormFromSelectedProject,
 } = useWorkspaceForms({ selectedProject })
 const {
+  activeWorkspaceNavLabel,
   currentPage,
   handleWorkspaceNav,
   handleWorkspaceTask,
@@ -170,6 +171,7 @@ async function loadWorkspace() {
   <WorkspaceShell
     v-else-if="requiresAuth(currentPage) && token"
     v-model:show-create-project-modal="showCreateProjectModal"
+    :active-workspace-nav-label="activeWorkspaceNavLabel"
     :busy="busy"
     :current-page="currentPage"
     :llm-mode-label="llmModeLabel"

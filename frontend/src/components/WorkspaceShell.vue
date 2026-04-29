@@ -26,6 +26,7 @@ import { workspaceNavItems } from '../workspaceConfig'
 type ProjectForm = ReturnType<typeof createDefaultProjectForm>
 
 const props = defineProps<{
+  activeWorkspaceNavLabel: string
   busy: boolean
   currentPage: PageName
   llmModeLabel: string
@@ -56,11 +57,7 @@ const showModal = computed({
 })
 
 function isWorkspaceNavActive(item: WorkspaceNavItem) {
-  if (item.page !== props.currentPage) return false
-  if (item.mainPanel && item.mainPanel !== props.workbenchMainPanel) return false
-  if (item.sidePanel && item.sidePanel !== props.workbenchSidePanel) return false
-  if (item.settingsPanel && item.settingsPanel !== props.settingsPanel) return false
-  return true
+  return item.label === props.activeWorkspaceNavLabel
 }
 </script>
 

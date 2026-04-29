@@ -31,9 +31,23 @@ export function useNavigation(source: UseNavigationSource) {
   const workbenchMainPanel = ref<WorkbenchMainPanel>('run')
   const workbenchSidePanel = ref<WorkbenchSidePanel>('bible')
   const settingsPanel = ref<SettingsPanel>('llm')
+  const activeWorkspaceNavLabel = ref('')
 
-  function navigateTo(page: PageName) {
+  function defaultWorkspaceNavLabel(page: PageName) {
+    if (page === 'index') return '工作台'
+    if (page === 'settings') return '设置'
+    if (page === 'workbench') {
+      if (workbenchMainPanel.value === 'events') return '运行日志'
+      if (workbenchMainPanel.value === 'drafts') return '章节管理'
+      if (workbenchMainPanel.value === 'plans') return '大纲管理'
+      return '成本管理'
+    }
+    return ''
+  }
+
+  function navigateTo(page: PageName, workspaceNavLabel?: string) {
     currentPage.value = page
+    activeWorkspaceNavLabel.value = workspaceNavLabel ?? defaultWorkspaceNavLabel(page)
     const path = page === 'studio' ? '/studio' : `/${page}`
     if (window.location.pathname !== path) {
       window.history.pushState({}, '', path)
@@ -45,6 +59,7 @@ export function useNavigation(source: UseNavigationSource) {
 
   function syncPageFromHistory() {
     currentPage.value = pageFromPath(window.location.pathname)
+    activeWorkspaceNavLabel.value = defaultWorkspaceNavLabel(currentPage.value)
     if (requiresAuth(currentPage.value) && !source.token.value) {
       navigateTo('login')
     }
@@ -63,7 +78,7 @@ export function useNavigation(source: UseNavigationSource) {
     if (item.settingsPanel) {
       settingsPanel.value = item.settingsPanel
     }
-    navigateTo(item.page)
+    navigateTo(item.page, item.label)
   }
 
   function handleWorkspaceTask(task: WorkspaceTask) {
@@ -111,6 +126,7 @@ export function useNavigation(source: UseNavigationSource) {
   })
 
   return {
+    activeWorkspaceNavLabel,
     currentPage,
     handleWorkspaceNav,
     handleWorkspaceTask,
