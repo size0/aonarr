@@ -90,8 +90,8 @@ def test_login_rate_limit(monkeypatch) -> None:
 
 def test_production_rejects_default_credentials(monkeypatch) -> None:
     monkeypatch.setenv("APP_ENV", "production")
-    monkeypatch.setenv("ADMIN_PASSWORD", "change-me")
-    monkeypatch.setenv("SECRET_KEY", "dev-secret-change-me")
+    monkeypatch.setenv("ADMIN_PASSWORD", "replace-with-strong-admin-password")
+    monkeypatch.setenv("SECRET_KEY", "replace-with-64-character-random-secret")
     get_settings.cache_clear()
     try:
         try:

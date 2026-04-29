@@ -6,10 +6,9 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir -e .
-
 COPY app ./app
 COPY scripts ./scripts
+RUN pip install --no-cache-dir .
 
 EXPOSE 8000
 

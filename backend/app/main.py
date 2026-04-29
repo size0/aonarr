@@ -26,9 +26,13 @@ def validate_production_settings() -> None:
     if settings.app_env != "production":
         return
     insecure_fields: list[str] = []
-    if settings.admin_password == "change-me":
+    if settings.admin_password in {"change-me", "replace-with-strong-admin-password"}:
         insecure_fields.append("ADMIN_PASSWORD")
-    if settings.secret_key in {"change-me", "dev-secret-change-me"}:
+    if settings.secret_key in {
+        "change-me",
+        "dev-secret-change-me",
+        "replace-with-64-character-random-secret",
+    }:
         insecure_fields.append("SECRET_KEY")
     if insecure_fields:
         fields = ", ".join(insecure_fields)
