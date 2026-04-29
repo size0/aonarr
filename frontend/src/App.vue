@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { ref } from 'vue'
 import {
-  pageFromPath,
   requiresAuth,
   type PageName,
-  type SettingsPanel,
-  type WorkbenchMainPanel,
-  type WorkbenchSidePanel,
-  type WorkspaceNavItem,
-  type WorkspaceTask,
 } from './composables/useWorkspace'
 import { useAuth } from './composables/useAuth'
+import { useNavigation } from './composables/useNavigation'
 import { useWorkspaceActions } from './composables/useWorkspaceActions'
 import { useWorkspaceDashboard } from './composables/useWorkspaceDashboard'
 import { useWorkspaceData } from './composables/useWorkspaceData'
@@ -27,8 +22,13 @@ import {
   createDefaultRunForm,
 } from './formDefaults'
 
-const currentPage = ref<PageName>(pageFromPath(window.location.pathname))
 const eventSource = ref<EventSource | null>(null)
+let navigateToPage: (page: PageName) => void = () => {}
+
+function navigateTo(page: PageName) {
+  navigateToPage(page)
+}
+
 const {
   busy,
   canLoginSubmit,
@@ -43,10 +43,6 @@ const {
   token,
   username,
 } = useAuth({ eventSource, navigateTo })
-const showCreateProjectModal = ref(false)
-const workbenchMainPanel = ref<WorkbenchMainPanel>('run')
-const workbenchSidePanel = ref<WorkbenchSidePanel>('bible')
-const settingsPanel = ref<SettingsPanel>('llm')
 
 const llmForm = ref(createDefaultLLMForm())
 const newProjectForm = ref(createDefaultProjectForm())
@@ -75,6 +71,27 @@ const {
   selectedRun,
   selectedRunId,
 } = useWorkspaceData(token)
+const {
+  currentPage,
+  handleWorkspaceNav,
+  handleWorkspaceTask,
+  navigateTo: navigateToImpl,
+  openCreateProjectModal,
+  selectWorkspaceProject,
+  settingsPanel,
+  showCreateProjectModal,
+  workbenchMainPanel,
+  workbenchSidePanel,
+} = useNavigation({
+  eventSource,
+  loadWorkspace,
+  selectedProject,
+  selectedProjectId,
+  setNotice,
+  syncProjectFormFromSelectedProject,
+  token,
+})
+navigateToPage = navigateToImpl
 const { workspaceDataSummary, workspaceMetrics, workspaceTasks, workspaceWorks } = useWorkspaceDashboard({
   acceptedDrafts,
   costSummary,
@@ -126,48 +143,6 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unexpected error'
 }
 
-function navigateTo(page: PageName) {
-  currentPage.value = page
-  const path = page === 'studio' ? '/studio' : `/${page}`
-  if (window.location.pathname !== path) {
-    window.history.pushState({}, '', path)
-  }
-  if (requiresAuth(page) && token.value) {
-    loadWorkspace().catch((error) => setNotice(errorMessage(error)))
-  }
-}
-
-function syncPageFromHistory() {
-  currentPage.value = pageFromPath(window.location.pathname)
-  if (requiresAuth(currentPage.value) && !token.value) {
-    navigateTo('login')
-  }
-  if (requiresAuth(currentPage.value) && token.value) {
-    loadWorkspace().catch((error) => setNotice(errorMessage(error)))
-  }
-}
-
-function isWorkspaceNavActive(item: WorkspaceNavItem) {
-  if (item.page !== currentPage.value) return false
-  if (item.mainPanel && item.mainPanel !== workbenchMainPanel.value) return false
-  if (item.sidePanel && item.sidePanel !== workbenchSidePanel.value) return false
-  if (item.settingsPanel && item.settingsPanel !== settingsPanel.value) return false
-  return true
-}
-
-function handleWorkspaceNav(item: WorkspaceNavItem) {
-  if (item.mainPanel) {
-    workbenchMainPanel.value = item.mainPanel
-  }
-  if (item.sidePanel) {
-    workbenchSidePanel.value = item.sidePanel
-  }
-  if (item.settingsPanel) {
-    settingsPanel.value = item.settingsPanel
-  }
-  navigateTo(item.page)
-}
-
 function syncProjectFormFromSelectedProject() {
   if (!selectedProject.value) return
   projectForm.value = {
@@ -179,58 +154,14 @@ function syncProjectFormFromSelectedProject() {
   }
 }
 
-function handleWorkspaceTask(task: WorkspaceTask) {
-  if (task.createProject || (task.page === 'workbench' && !selectedProject.value)) {
-    showCreateProjectModal.value = true
-    return
-  }
-  if (task.mainPanel) {
-    workbenchMainPanel.value = task.mainPanel
-  }
-  if (task.sidePanel) {
-    workbenchSidePanel.value = task.sidePanel
-  }
-  if (task.page) {
-    navigateTo(task.page)
-  }
-}
-
 function handleProjectSelection() {
   syncProjectFormFromSelectedProject()
   loadProjectData().catch((error) => setNotice(errorMessage(error)))
 }
 
-function selectWorkspaceProject(projectId: string) {
-  if (!projectId) {
-    showCreateProjectModal.value = true
-    return
-  }
-  selectedProjectId.value = projectId
-  syncProjectFormFromSelectedProject()
-  workbenchMainPanel.value = 'run'
-  navigateTo('workbench')
-}
-
-function openCreateProjectModal() {
-  showCreateProjectModal.value = true
-}
-
 async function loadWorkspace() {
   await loadWorkspaceData(syncProjectFormFromSelectedProject)
 }
-
-onMounted(() => {
-  if (window.location.pathname === '/') {
-    window.history.replaceState({}, '', '/studio')
-  }
-  syncPageFromHistory()
-  window.addEventListener('popstate', syncPageFromHistory)
-})
-
-onUnmounted(() => {
-  eventSource.value?.close()
-  window.removeEventListener('popstate', syncPageFromHistory)
-})
 </script>
 
 <template>
