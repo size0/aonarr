@@ -51,6 +51,10 @@ const rememberModel = computed({
   get: () => props.remember,
   set: (value: boolean) => emit('update:remember', value),
 })
+
+function showNotice(message: string) {
+  emit('notice', message)
+}
 </script>
 
 <template>
@@ -68,14 +72,14 @@ const rememberModel = computed({
 
       <nav class="top-nav" aria-label="产品导航">
         <button type="button" @click="emit('navigateStudio')">首页</button>
-        <button type="button">功能</button>
-        <button type="button">提示词</button>
-        <button type="button">运行日志</button>
-        <button type="button">导出</button>
+        <button type="button" @click="emit('navigateStudio')">功能</button>
+        <button type="button" @click="showNotice('请先登录，登录后可在系统设置中编辑提示词模板。')">提示词</button>
+        <button type="button" @click="showNotice('请先登录，登录后可在生产工作台查看运行日志。')">运行日志</button>
+        <button type="button" @click="showNotice('请先登录，登录后可在草稿审阅中导出文稿。')">导出</button>
       </nav>
 
       <div class="header-actions">
-        <button class="language-btn" type="button">
+        <button class="language-btn" type="button" @click="showNotice('当前界面语言为简体中文。')">
           <n-icon :component="GlobeOutline" />
           简体中文
           <n-icon :component="ChevronDownOutline" />

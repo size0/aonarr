@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { NButton, NIcon, NInput, NTag } from 'naive-ui'
 import {
   AddOutline,
@@ -22,10 +23,26 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   navigate: [page: PageName]
+  notice: [message: string]
 }>()
+
+const landingNotice = ref('')
 
 function enterWorkspace() {
   emit('navigate', props.hasToken ? 'index' : 'login')
+}
+
+function navigateAfterAuth(page: PageName) {
+  emit('navigate', props.hasToken ? page : 'login')
+}
+
+function showLandingNotice(message: string) {
+  landingNotice.value = message
+  emit('notice', message)
+}
+
+function scrollToSelector(selector: string) {
+  document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 </script>
 
@@ -38,16 +55,16 @@ function enterWorkspace() {
       </button>
 
       <nav class="main-nav" aria-label="主导航">
-        <button class="active" type="button">首页</button>
-        <button type="button">功能</button>
-        <button type="button">提示词</button>
-        <button type="button">自动修订</button>
-        <button type="button">导出</button>
-        <button type="button">关于</button>
+        <button class="active" type="button" @click="scrollToSelector('.hero')">首页</button>
+        <button type="button" @click="scrollToSelector('.feature-strip')">功能</button>
+        <button type="button" @click="navigateAfterAuth('settings')">提示词</button>
+        <button type="button" @click="navigateAfterAuth('workbench')">自动修订</button>
+        <button type="button" @click="navigateAfterAuth('workbench')">导出</button>
+        <button type="button" @click="showLandingNotice('aonarr 当前提供自托管小说创作工作台，商业化 Beta 部署骨架已就绪。')">关于</button>
       </nav>
 
       <div class="header-actions">
-        <n-button quaternary circle aria-label="切换主题">
+        <n-button quaternary circle aria-label="切换主题" @click="showLandingNotice('主题切换将在后续版本开放。')">
           <template #icon>
             <n-icon :component="MoonOutline" />
           </template>
@@ -87,6 +104,8 @@ function enterWorkspace() {
           <n-button secondary size="large" @click="emit('navigate', 'login')">查看登录页</n-button>
         </div>
 
+        <p v-if="landingNotice" class="panel-note">{{ landingNotice }}</p>
+
         <div class="hero-stats">
           <div>
             <strong>自动化</strong>
@@ -109,7 +128,13 @@ function enterWorkspace() {
             <span />
             <strong>我的作品</strong>
           </div>
-          <button v-for="item in studioSideNav" :key="item.label" :class="{ active: item.active }" type="button">
+          <button
+            v-for="item in studioSideNav"
+            :key="item.label"
+            :class="{ active: item.active }"
+            type="button"
+            @click="showLandingNotice(`${item.label} 是产品预览入口，请进入工作台使用真实数据。`)"
+          >
             <n-icon :component="item.icon" />
             {{ item.label }}
           </button>
@@ -122,7 +147,7 @@ function enterWorkspace() {
                 <n-icon :component="SearchOutline" />
               </template>
             </n-input>
-            <n-button type="primary">
+            <n-button type="primary" @click="enterWorkspace">
               <template #icon>
                 <n-icon :component="AddOutline" />
               </template>
@@ -155,7 +180,7 @@ function enterWorkspace() {
             <section class="characters-card">
               <div class="section-head">
                 <h2>角色设定</h2>
-                <button type="button">查看全部</button>
+                <button type="button" @click="navigateAfterAuth('workbench')">查看全部</button>
               </div>
               <div class="character-grid">
                 <div v-for="character in studioCharacters" :key="character.name" class="character-card">

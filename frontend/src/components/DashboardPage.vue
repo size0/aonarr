@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { Component } from 'vue'
 import { NButton, NIcon, NTag } from 'naive-ui'
 import { AddOutline, CheckmarkDoneOutline, ChevronBackOutline, ChevronForwardOutline } from '@vicons/ionicons5'
@@ -39,8 +40,28 @@ const emit = defineEmits<{
   openCreateProject: []
   refresh: []
   selectWorkspaceProject: [projectId: string]
+  setNotice: [message: string]
   workspaceTask: [task: WorkspaceTask]
 }>()
+
+const statsRange = ref('30天')
+
+function handleWorkMore(workId: string) {
+  if (!workId) {
+    emit('openCreateProject')
+    return
+  }
+  emit('selectWorkspaceProject', workId)
+}
+
+function notify(message: string) {
+  emit('setNotice', message)
+}
+
+function selectStatsRange(range: string) {
+  statsRange.value = range
+  notify(`已切换数据统计范围：${range}`)
+}
 </script>
 
 <template>
@@ -124,7 +145,7 @@ const emit = defineEmits<{
               <span>更新时间</span>
               <strong>{{ work.updated }}</strong>
             </div>
-            <button class="more-btn" type="button" aria-label="更多操作">···</button>
+            <button class="more-btn" type="button" aria-label="更多操作" @click.stop="handleWorkMore(work.id)">···</button>
           </div>
 
           <div class="create-row">
@@ -143,16 +164,16 @@ const emit = defineEmits<{
       <article class="panel calendar-panel">
         <div class="panel-head">
           <h2>创作日历</h2>
-          <button type="button">设置目标</button>
+          <button type="button" @click="notify('创作目标设置将在后续版本开放；当前可在生产驾驶舱设置运行目标。')">设置目标</button>
         </div>
         <div class="month-head">
-          <n-button quaternary circle size="small">
+          <n-button quaternary circle size="small" @click="notify('日历月份切换将在后续版本开放。')">
             <template #icon>
               <n-icon :component="ChevronBackOutline" />
             </template>
           </n-button>
           <strong>2024年5月</strong>
-          <n-button quaternary circle size="small">
+          <n-button quaternary circle size="small" @click="notify('日历月份切换将在后续版本开放。')">
             <template #icon>
               <n-icon :component="ChevronForwardOutline" />
             </template>
@@ -165,6 +186,7 @@ const emit = defineEmits<{
             :key="`${day.label}-${day.muted}`"
             :class="{ muted: day.muted, active: day.active, marked: day.marked }"
             type="button"
+            @click="notify(`创作日历 ${day.label} 日详情将在后续版本开放。`)"
           >
             {{ day.label }}
           </button>
@@ -189,10 +211,10 @@ const emit = defineEmits<{
         <div class="panel-head">
           <h2>数据统计</h2>
           <div class="tabs">
-            <button type="button">7天</button>
-            <button class="active" type="button">30天</button>
-            <button type="button">90天</button>
-            <button type="button">自定义</button>
+            <button :class="{ active: statsRange === '7天' }" type="button" @click="selectStatsRange('7天')">7天</button>
+            <button :class="{ active: statsRange === '30天' }" type="button" @click="selectStatsRange('30天')">30天</button>
+            <button :class="{ active: statsRange === '90天' }" type="button" @click="selectStatsRange('90天')">90天</button>
+            <button :class="{ active: statsRange === '自定义' }" type="button" @click="selectStatsRange('自定义')">自定义</button>
           </div>
         </div>
         <div class="data-summary">
@@ -216,7 +238,7 @@ const emit = defineEmits<{
       <article class="panel task-panel">
         <div class="panel-head">
           <h2>任务中心</h2>
-          <button type="button">
+          <button type="button" @click="notify('当前已展示全部可执行任务。')">
             更多任务
             <n-icon :component="ChevronForwardOutline" />
           </button>

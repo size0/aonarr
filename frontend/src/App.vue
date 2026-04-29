@@ -149,6 +149,7 @@ async function loadWorkspace() {
     v-if="currentPage === 'studio'"
     :has-token="Boolean(token)"
     @navigate="navigateTo"
+    @notice="setNotice"
   />
 
   <LoginPage
@@ -184,6 +185,7 @@ async function loadWorkspace() {
     @navigate="navigateTo"
     @open-event-stream="openEventStream"
     @refresh="loadWorkspace"
+    @set-notice="setNotice"
     @workspace-nav="handleWorkspaceNav"
   >
     <DashboardPage
@@ -201,6 +203,7 @@ async function loadWorkspace() {
       @open-create-project="openCreateProjectModal"
       @refresh="loadWorkspace"
       @select-workspace-project="selectWorkspaceProject"
+      @set-notice="setNotice"
       @workspace-task="handleWorkspaceTask"
     />
 

@@ -45,6 +45,7 @@ const emit = defineEmits<{
   navigate: [page: PageName]
   openEventStream: []
   refresh: []
+  setNotice: [message: string]
   'update:showCreateProjectModal': [value: boolean]
   workspaceNav: [item: WorkspaceNavItem]
 }>()
@@ -102,7 +103,7 @@ function isWorkspaceNavActive(item: WorkspaceNavItem) {
 
     <section class="workspace-main">
       <header class="topbar">
-        <n-button quaternary circle aria-label="展开导航">
+        <n-button quaternary circle aria-label="展开导航" @click="emit('setNotice', '侧边栏当前已展开；移动端折叠导航将在后续版本开放。')">
           <template #icon>
             <n-icon :component="MenuOutline" />
           </template>

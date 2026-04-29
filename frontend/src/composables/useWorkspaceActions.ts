@@ -104,7 +104,10 @@ export function useWorkspaceActions(source: WorkspaceActionsSource) {
   }
 
   async function setDraftStatus(draft: ChapterDraft, status: DraftStatus) {
-    if (!source.selectedProjectId.value) return
+    if (!source.selectedProjectId.value) {
+      source.setNotice('请先选择作品')
+      return
+    }
     source.busy.value = true
     try {
       if (status === 'accepted') {
@@ -148,7 +151,10 @@ export function useWorkspaceActions(source: WorkspaceActionsSource) {
   }
 
   async function saveBible() {
-    if (!source.selectedProjectId.value) return
+    if (!source.selectedProjectId.value) {
+      source.setNotice('请先选择作品')
+      return
+    }
     source.busy.value = true
     try {
       await apiRequest(`/api/v1/projects/${source.selectedProjectId.value}/bible`, {
@@ -165,7 +171,10 @@ export function useWorkspaceActions(source: WorkspaceActionsSource) {
   }
 
   async function startRun() {
-    if (!source.selectedProjectId.value) return
+    if (!source.selectedProjectId.value) {
+      source.setNotice('请先选择作品')
+      return
+    }
     source.busy.value = true
     try {
       const run = await apiRequest<SerialRun>(`/api/v1/projects/${source.selectedProjectId.value}/runs`, {
@@ -189,7 +198,10 @@ export function useWorkspaceActions(source: WorkspaceActionsSource) {
   }
 
   async function runAction(action: RunControlAction) {
-    if (!source.selectedProjectId.value || !source.selectedRunId.value) return
+    if (!source.selectedProjectId.value || !source.selectedRunId.value) {
+      source.setNotice('请先选择运行任务')
+      return
+    }
     try {
       await apiRequest(
         `/api/v1/projects/${source.selectedProjectId.value}/runs/${source.selectedRunId.value}/${action}`,
@@ -204,7 +216,10 @@ export function useWorkspaceActions(source: WorkspaceActionsSource) {
   }
 
   async function openEventStream() {
-    if (!source.selectedProjectId.value || !source.selectedRunId.value) return
+    if (!source.selectedProjectId.value || !source.selectedRunId.value) {
+      source.setNotice('请先选择运行任务')
+      return
+    }
     source.eventSource.value?.close()
     const sseToken = await apiRequest<{ token: string }>('/api/v1/auth/sse-token', { method: 'POST' })
     const eventsPath = [
@@ -227,7 +242,10 @@ export function useWorkspaceActions(source: WorkspaceActionsSource) {
   }
 
   async function exportMarkdown() {
-    if (!source.selectedProjectId.value) return
+    if (!source.selectedProjectId.value) {
+      source.setNotice('请先选择作品')
+      return
+    }
     try {
       const item = await apiRequest<{ id: string }>(`/api/v1/projects/${source.selectedProjectId.value}/exports`, {
         method: 'POST',
