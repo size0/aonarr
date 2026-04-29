@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { apiRequest } from './api'
+import { onMounted, onUnmounted, ref } from 'vue'
 import {
   pageFromPath,
   requiresAuth,
@@ -11,6 +10,7 @@ import {
   type WorkspaceNavItem,
   type WorkspaceTask,
 } from './composables/useWorkspace'
+import { useAuth } from './composables/useAuth'
 import { useWorkspaceActions } from './composables/useWorkspaceActions'
 import { useWorkspaceDashboard } from './composables/useWorkspaceDashboard'
 import { useWorkspaceData } from './composables/useWorkspaceData'
@@ -27,17 +27,22 @@ import {
   createDefaultRunForm,
 } from './formDefaults'
 
-const token = ref(localStorage.getItem('swe_token') ?? sessionStorage.getItem('swe_token') ?? '')
-const username = ref('admin')
-const password = ref('')
-const notice = ref('就绪')
-const busy = ref(false)
-const remember = ref(true)
-const showDevLoginHint = import.meta.env.DEV
-
 const currentPage = ref<PageName>(pageFromPath(window.location.pathname))
-
 const eventSource = ref<EventSource | null>(null)
+const {
+  busy,
+  canLoginSubmit,
+  fillDevLogin,
+  login,
+  logout,
+  notice,
+  password,
+  remember,
+  setNotice,
+  showDevLoginHint,
+  token,
+  username,
+} = useAuth({ eventSource, navigateTo })
 const showCreateProjectModal = ref(false)
 const workbenchMainPanel = ref<WorkbenchMainPanel>('run')
 const workbenchSidePanel = ref<WorkbenchSidePanel>('bible')
@@ -70,7 +75,6 @@ const {
   selectedRun,
   selectedRunId,
 } = useWorkspaceData(token)
-const canLoginSubmit = computed(() => username.value.trim().length > 0 && password.value.trim().length > 0)
 const { workspaceDataSummary, workspaceMetrics, workspaceTasks, workspaceWorks } = useWorkspaceDashboard({
   acceptedDrafts,
   costSummary,
@@ -117,10 +121,6 @@ const {
   setNotice,
   showCreateProjectModal,
 })
-
-function setNotice(message: string) {
-  notice.value = message
-}
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unexpected error'
@@ -195,11 +195,6 @@ function handleWorkspaceTask(task: WorkspaceTask) {
   }
 }
 
-function fillDevLogin() {
-  username.value = 'admin'
-  password.value = 'change-me'
-}
-
 function handleProjectSelection() {
   syncProjectFormFromSelectedProject()
   loadProjectData().catch((error) => setNotice(errorMessage(error)))
@@ -218,45 +213,6 @@ function selectWorkspaceProject(projectId: string) {
 
 function openCreateProjectModal() {
   showCreateProjectModal.value = true
-}
-
-async function login() {
-  if (!canLoginSubmit.value) return
-  busy.value = true
-  try {
-    const result = await apiRequest<{ token: string }>('/api/v1/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ username: username.value, password: password.value }),
-    })
-    token.value = result.token
-    if (remember.value) {
-      localStorage.setItem('swe_token', result.token)
-      sessionStorage.removeItem('swe_token')
-    } else {
-      sessionStorage.setItem('swe_token', result.token)
-      localStorage.removeItem('swe_token')
-    }
-    setNotice('Logged in')
-    navigateTo('index')
-  } catch (error) {
-    setNotice(errorMessage(error))
-  } finally {
-    busy.value = false
-  }
-}
-
-async function logout() {
-  try {
-    await apiRequest('/api/v1/auth/logout', { method: 'POST' })
-  } catch {
-    // Ignore logout failures in local MVP mode.
-  }
-  eventSource.value?.close()
-  token.value = ''
-  localStorage.removeItem('swe_token')
-  sessionStorage.removeItem('swe_token')
-  setNotice('Logged out')
-  navigateTo('login')
 }
 
 async function loadWorkspace() {
