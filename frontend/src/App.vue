@@ -9,18 +9,13 @@ import { useNavigation } from './composables/useNavigation'
 import { useWorkspaceActions } from './composables/useWorkspaceActions'
 import { useWorkspaceDashboard } from './composables/useWorkspaceDashboard'
 import { useWorkspaceData } from './composables/useWorkspaceData'
+import { useWorkspaceForms } from './composables/useWorkspaceForms'
 import DashboardPage from './components/DashboardPage.vue'
 import LoginPage from './components/LoginPage.vue'
 import SettingsPage from './components/SettingsPage.vue'
 import StudioPage from './components/StudioPage.vue'
 import WorkbenchPage from './components/WorkbenchPage.vue'
 import WorkspaceShell from './components/WorkspaceShell.vue'
-import {
-  createDefaultBibleForm,
-  createDefaultLLMForm,
-  createDefaultProjectForm,
-  createDefaultRunForm,
-} from './formDefaults'
 
 const eventSource = ref<EventSource | null>(null)
 let navigateToPage: (page: PageName) => void = () => {}
@@ -44,12 +39,6 @@ const {
   username,
 } = useAuth({ eventSource, navigateTo })
 
-const llmForm = ref(createDefaultLLMForm())
-const newProjectForm = ref(createDefaultProjectForm())
-const projectForm = ref(createDefaultProjectForm())
-const bibleForm = ref(createDefaultBibleForm())
-const runForm = ref(createDefaultRunForm())
-
 const {
   acceptedDrafts,
   costSummary,
@@ -71,6 +60,14 @@ const {
   selectedRun,
   selectedRunId,
 } = useWorkspaceData(token)
+const {
+  bibleForm,
+  llmForm,
+  newProjectForm,
+  projectForm,
+  runForm,
+  syncProjectFormFromSelectedProject,
+} = useWorkspaceForms({ selectedProject })
 const {
   currentPage,
   handleWorkspaceNav,
@@ -141,17 +138,6 @@ const {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unexpected error'
-}
-
-function syncProjectFormFromSelectedProject() {
-  if (!selectedProject.value) return
-  projectForm.value = {
-    title: selectedProject.value.title,
-    genre: selectedProject.value.genre,
-    target_chapter_count: selectedProject.value.target_chapter_count,
-    target_words_per_chapter: selectedProject.value.target_words_per_chapter,
-    style_goal: selectedProject.value.style_goal,
-  }
 }
 
 function handleProjectSelection() {
