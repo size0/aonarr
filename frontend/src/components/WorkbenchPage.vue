@@ -4,11 +4,21 @@ import { NButton, NIcon } from 'naive-ui'
 import {
   AddOutline,
   ChevronBackOutline,
+  ChevronForwardOutline,
   CopyOutline,
   CreateOutline,
   EllipsisHorizontalOutline,
+  FileTrayFullOutline,
+  FlameOutline,
+  GlobeOutline,
+  LibraryOutline,
+  MapOutline,
+  PeopleOutline,
   SearchOutline,
   SettingsOutline,
+  ShieldCheckmarkOutline,
+  SparklesOutline,
+  TimeOutline,
 } from '@vicons/ionicons5'
 import type {
   createDefaultBibleForm,
@@ -104,12 +114,29 @@ const sidePanelModel = computed({
 
 const chapterFilter = ref<ChapterFilter>('all')
 const chapterSearch = ref('')
+const worldTabs = ['世界概览', '地理环境', '历史文明', '势力组织', '种族设定', '魔法体系', '科技体系', '规则设定']
+const activeWorldTab = ref('世界概览')
 
 const publishedDrafts = computed(() => props.drafts.filter((item) => item.status === 'accepted'))
 const draftChapterCount = computed(() => props.drafts.filter((item) => item.status !== 'accepted').length)
 const totalWords = computed(() => props.drafts.reduce((sum, item) => sum + item.word_count, 0))
 const totalChapterCount = computed(() => Math.max(props.selectedProject?.target_chapter_count ?? 0, props.plans.length, props.drafts.length))
 const chapterCoverText = computed(() => props.selectedProject?.title.slice(0, 2) || '作品')
+const worldSettingCategories = computed(() => [
+  { title: '地理环境', desc: '大陆、国家、城市、地形、气候和资源设定', count: 28, icon: MapOutline, tone: 'blue' },
+  { title: '历史文明', desc: '历史事件、纪元划分、文化传承和文明兴衰', count: 35, icon: LibraryOutline, tone: 'purple' },
+  { title: '势力组织', desc: '宗门、朝廷、家族、商会和敌对阵营', count: 42, icon: ShieldCheckmarkOutline, tone: 'orange' },
+  { title: '种族设定', desc: '神族、妖族、外貌特征和文化习俗', count: 18, icon: PeopleOutline, tone: 'green' },
+  { title: '魔法体系', desc: '灵法类型、元素属性、禁术和修炼路径', count: 15, icon: SparklesOutline, tone: 'violet' },
+  { title: '科技体系', desc: '科技水平、发明创造、工艺技术和能源', count: 12, icon: GlobeOutline, tone: 'cyan' },
+  { title: '规则设定', desc: '世界规则、物理法则、禁忌和特殊条件', count: 6, icon: FlameOutline, tone: 'red' },
+  { title: '神话传说', desc: '神话故事、传说典故、宗教信仰和预言', count: 8, icon: FileTrayFullOutline, tone: 'amber' },
+])
+const worldTotalSettings = computed(() => worldSettingCategories.value.reduce((sum, item) => sum + item.count, 0))
+const worldUpdateItems = computed(() => [
+  { title: `${props.selectedProject?.genre ?? '主线'}世界观主日志表`, tag: '魔法体系', status: '重要设定', date: '2024-05-20 14:30' },
+  { title: `${props.selectedProject?.title ?? '当前作品'}历史年表`, tag: '历史文明', status: '已公开', date: '2024-05-20 10:15' },
+])
 
 const chapterRows = computed<ChapterRow[]>(() => {
   if (props.drafts.length) {
@@ -168,6 +195,10 @@ function openNewChapterFlow() {
 function notifyChapterAction(message: string) {
   emit('setNotice', message)
 }
+
+function notifyWorldAction(message: string) {
+  emit('setNotice', message)
+}
 </script>
 
 <template>
@@ -190,6 +221,180 @@ function notifyChapterAction(message: string) {
       <p>生产工作台是单本书的生产空间，用来配置故事设定、启动自动连载、审阅草稿和查看运行日志。</p>
       <n-button type="primary" @click="emit('openCreateProject')">创建作品</n-button>
     </div>
+
+    <section v-else-if="mainPanelModel === 'world'" class="world-setting-view">
+      <header class="world-setting-header">
+        <div>
+          <h1>世界观设定</h1>
+          <p>构建完整的世界观体系，让你的故事更加立体和真实</p>
+        </div>
+        <button class="chapter-primary-button" type="button" @click="notifyWorldAction('新建设定条目将在后续版本开放；当前可先编辑故事设定。')">
+          <n-icon :component="AddOutline" />
+          新建设定
+        </button>
+      </header>
+
+      <nav class="world-tabs" aria-label="世界观分类">
+        <button
+          v-for="tab in worldTabs"
+          :key="tab"
+          :class="{ active: activeWorldTab === tab }"
+          type="button"
+          @click="activeWorldTab = tab"
+        >
+          {{ tab }}
+        </button>
+      </nav>
+
+      <section class="world-setting-grid">
+        <div class="world-main-column">
+          <article class="world-card world-overview-card">
+            <div class="world-card-head">
+              <h2>世界概览</h2>
+            </div>
+            <div class="world-overview-body">
+              <div class="world-hero-image"></div>
+              <div class="world-overview-copy">
+                <div>
+                  <h3>{{ bibleForm.world_summary ? `${selectedProject.genre}世界` : `${selectedProject.title}世界观` }}</h3>
+                  <span>主要世界</span>
+                </div>
+                <p>{{ bibleForm.world_summary || '在这里梳理大陆格局、时代背景、势力关系和核心规则，为后续章节生成提供统一参照。' }}</p>
+                <div class="world-meta-grid">
+                  <div>
+                    <n-icon :component="TimeOutline" />
+                    <span>创建时间</span>
+                    <strong>2024-01-15</strong>
+                  </div>
+                  <div>
+                    <n-icon :component="TimeOutline" />
+                    <span>更新时间</span>
+                    <strong>2024-05-20</strong>
+                  </div>
+                  <div>
+                    <n-icon :component="PeopleOutline" />
+                    <span>关联作品</span>
+                    <strong>{{ selectedProject.title }}</strong>
+                  </div>
+                  <div>
+                    <n-icon :component="FileTrayFullOutline" />
+                    <span>设定条目</span>
+                    <strong>{{ worldTotalSettings }} 项</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="world-card">
+            <div class="world-card-head">
+              <h2>核心设定分类</h2>
+            </div>
+            <div class="world-category-grid">
+              <button
+                v-for="item in worldSettingCategories"
+                :key="item.title"
+                :class="['world-category-card', item.tone]"
+                type="button"
+                @click="activeWorldTab = item.title"
+              >
+                <n-icon :component="item.icon" />
+                <span>
+                  <strong>{{ item.title }}</strong>
+                  <em>{{ item.desc }}</em>
+                  <small>{{ item.count }} 项设定</small>
+                </span>
+              </button>
+            </div>
+          </article>
+
+          <article class="world-card">
+            <div class="world-card-head">
+              <h2>最近更新</h2>
+              <button type="button" @click="notifyWorldAction('完整更新记录将在后续版本开放。')">
+                查看全部
+                <n-icon :component="ChevronForwardOutline" />
+              </button>
+            </div>
+            <div class="world-update-list">
+              <div v-for="item in worldUpdateItems" :key="item.title" class="world-update-row">
+                <n-icon :component="FileTrayFullOutline" />
+                <div>
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ bibleForm.premise || '根据当前故事前提持续沉淀世界观资料。' }}</p>
+                </div>
+                <span>{{ item.tag }}</span>
+                <em>{{ item.status }}</em>
+                <small>{{ item.date }}</small>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <aside class="world-side-column">
+          <article class="world-card">
+            <div class="world-card-head">
+              <h2>设定统计</h2>
+              <button type="button" @click="notifyWorldAction('设定统计详情将在后续版本开放。')">查看详情</button>
+            </div>
+            <div class="world-stat-card">
+              <div class="world-donut">
+                <span>{{ worldTotalSettings }}</span>
+                <em>总设定数</em>
+              </div>
+              <div class="world-stat-legend">
+                <div v-for="item in worldSettingCategories.slice(0, 6)" :key="item.title">
+                  <span :class="item.tone"></span>
+                  <strong>{{ item.title }}</strong>
+                  <em>{{ item.count }}</em>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="world-card">
+            <div class="world-card-head">
+              <h2>世界地图</h2>
+              <button type="button" @click="notifyWorldAction('世界地图编辑将在后续版本开放。')">
+                查看详情
+                <n-icon :component="ChevronForwardOutline" />
+              </button>
+            </div>
+            <div class="world-map-card">
+              <span class="pin pin-blue">北境之地</span>
+              <span class="pin pin-red">中央帝国</span>
+              <span class="pin pin-green">精灵森林</span>
+              <span class="pin pin-orange">沙海王国</span>
+              <span class="pin pin-purple">海洋领地</span>
+            </div>
+          </article>
+
+          <article class="world-card">
+            <div class="world-card-head">
+              <h2>快速操作</h2>
+            </div>
+            <div class="world-quick-actions">
+              <button type="button" @click="notifyWorldAction('新建设定条目将在后续版本开放。')">
+                <n-icon :component="FileTrayFullOutline" />
+                <span><strong>新建设定条目</strong><em>创建新的世界观设定</em></span>
+              </button>
+              <button type="button" @click="notifyWorldAction('批量导入设定将在后续版本开放。')">
+                <n-icon :component="AddOutline" />
+                <span><strong>批量导入设定</strong><em>从文件批量导入设定条目</em></span>
+              </button>
+              <button type="button" @click="notifyWorldAction('设定关系图谱将在后续版本开放。')">
+                <n-icon :component="SparklesOutline" />
+                <span><strong>设定关系图谱</strong><em>查看设定之间的关联关系</em></span>
+              </button>
+              <button type="button" @click="notifyWorldAction('世界观设定导出备份将在后续版本开放。')">
+                <n-icon :component="ChevronForwardOutline" />
+                <span><strong>设定导出备份</strong><em>导出世界观设定数据</em></span>
+              </button>
+            </div>
+          </article>
+        </aside>
+      </section>
+    </section>
 
     <section v-else-if="mainPanelModel === 'drafts'" class="chapter-manager-view">
       <header class="chapter-manager-header">

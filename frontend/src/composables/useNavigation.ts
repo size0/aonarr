@@ -50,6 +50,7 @@ export function useNavigation(source: UseNavigationSource) {
       if (workbenchMainPanel.value === 'events') return '运行日志'
       if (workbenchMainPanel.value === 'drafts') return '章节管理'
       if (workbenchMainPanel.value === 'plans') return '大纲管理'
+      if (workbenchMainPanel.value === 'world') return '世界观设定'
       return '成本管理'
     }
     return ''

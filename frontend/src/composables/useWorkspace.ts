@@ -1,7 +1,7 @@
 import type { Component } from 'vue'
 
 export type PageName = 'studio' | 'login' | 'index' | 'workbench' | 'settings'
-export type WorkbenchMainPanel = 'run' | 'plans' | 'drafts' | 'events'
+export type WorkbenchMainPanel = 'run' | 'plans' | 'drafts' | 'events' | 'world'
 export type WorkbenchSidePanel = 'bible' | 'project' | 'export'
 export type SettingsPanel = 'llm' | 'prompts' | 'runtime'
 export type WorkspaceIndexPanel = 'overview' | 'works' | 'stats' | 'fans' | 'tasks'

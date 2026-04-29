@@ -73,7 +73,7 @@ export const workspaceNavItems: WorkspaceNavItem[] = [
   { label: '章节管理', icon: ReaderOutline, page: 'workbench', mainPanel: 'drafts' },
   { label: '人物管理', icon: PeopleOutline, page: 'workbench', sidePanel: 'project' },
   { label: '大纲管理', icon: ListOutline, page: 'workbench', mainPanel: 'plans' },
-  { label: '世界观设定', icon: GlobeOutline, page: 'workbench', sidePanel: 'bible' },
+  { label: '世界观设定', icon: GlobeOutline, page: 'workbench', mainPanel: 'world', sidePanel: 'bible' },
   { label: '素材库', icon: ImageOutline, page: 'workbench', sidePanel: 'project' },
   { label: '数据统计', icon: StatsChartOutline, page: 'index', indexPanel: 'stats' },
   { label: '粉丝互动', icon: HeartOutline, page: 'index', indexPanel: 'fans' },
