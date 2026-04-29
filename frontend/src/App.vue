@@ -5,8 +5,6 @@ import {
   AddOutline,
   ArrowBackOutline,
   ArrowForwardOutline,
-  BarChartOutline,
-  CashOutline,
   CheckmarkDoneOutline,
   ChevronBackOutline,
   ChatbubbleEllipsesOutline,
@@ -26,7 +24,6 @@ import {
   NotificationsOutline,
   PaperPlaneOutline,
   PhonePortraitOutline,
-  PencilOutline,
   ReaderOutline,
   SearchOutline,
   SettingsOutline,
@@ -51,8 +48,8 @@ import {
   type WorkbenchSidePanel,
   type WorkspaceNavItem,
   type WorkspaceTask,
-  type WorkspaceWork,
 } from './composables/useWorkspace'
+import { useWorkspaceDashboard } from './composables/useWorkspaceDashboard'
 import type { ChapterDraft, ChapterPlan, LLMProfile, Project, PromptTemplate, Readiness, RunEvent, RuntimeSettings, SerialRun } from './types'
 import {
   calendarDays,
@@ -107,120 +104,25 @@ const runForm = ref(createDefaultRunForm())
 const selectedProject = computed(() => projects.value.find((item) => item.id === selectedProjectId.value) ?? null)
 const selectedRun = computed(() => runs.value.find((item) => item.id === selectedRunId.value) ?? null)
 const acceptedDrafts = computed(() => drafts.value.filter((item) => item.status === 'accepted'))
-const needsRevisionDrafts = computed(() => drafts.value.filter((item) => item.status === 'needs_revision'))
 const llmModeLabel = computed(() => displayRuntimeMode(runtimeSettings.value?.llm_mode))
 const canLoginSubmit = computed(() => username.value.trim().length > 0 && password.value.trim().length > 0)
-
-const workspaceMetrics = computed(() => [
-  {
-    label: '章节草稿',
-    value: `${drafts.value.length}`,
-    delta: `已通过 ${acceptedDrafts.value.length} 章`,
-    icon: PencilOutline,
-    tone: 'purple',
-    color: '#6d4df6',
-    points: '0,48 24,36 42,31 62,40 82,42 104,26 123,34 142,22 162,20 184,28 205,18 224,28 244,17 260,14',
-  },
-  {
-    label: '章节计划',
-    value: `${plans.value.length}`,
-    delta: `待修订 ${needsRevisionDrafts.value.length} 章`,
-    icon: BarChartOutline,
-    tone: 'blue',
-    color: '#2f7df6',
-    points: '0,50 24,35 43,28 64,40 86,38 108,24 126,34 148,20 170,18 190,26 212,16 232,30 248,22 260,21',
-  },
-  {
-    label: '运行任务',
-    value: `${runs.value.length}`,
-    delta: selectedRun.value ? `当前 ${displayStatus(selectedRun.value.status)}` : '暂无运行',
-    icon: StarOutline,
-    tone: 'green',
-    color: '#11aa7d',
-    points: '0,50 24,38 44,31 64,42 86,40 108,25 128,36 148,22 170,20 190,30 212,18 232,28 250,20 260,16',
-  },
-  {
-    label: '估算成本',
-    value: `$${costSummary.value?.estimated_total_cost ?? 0}`,
-    delta: `模型：${llmModeLabel.value}`,
-    icon: CashOutline,
-    tone: 'orange',
-    color: '#ff9a2f',
-    points: '0,50 22,37 42,43 64,26 84,38 106,25 128,18 150,21 170,32 192,20 212,30 234,18 248,20 260,15',
-  },
-])
-
-const workspaceWorks = computed<WorkspaceWork[]>(() => {
-  if (!projects.value.length) {
-    return [{
-      id: '',
-      title: newProjectForm.value.title,
-      status: '草稿',
-      statusType: 'info',
-      meta: `${newProjectForm.value.genre} · ${newProjectForm.value.target_chapter_count} 章目标 · ${newProjectForm.value.target_words_per_chapter} 字/章`,
-      words: '0',
-      reads: '0',
-      favorites: '0',
-      updated: '未创建',
-      cover: newProjectForm.value.title.slice(0, 2),
-      coverTone: 'dark',
-    }]
-  }
-  return projects.value.slice(0, 4).map((project, index) => {
-    const isSelected = project.id === selectedProjectId.value
-    return {
-      id: project.id,
-      title: project.title,
-      status: project.status,
-      statusType: project.status === 'active' ? 'success' : 'info',
-      meta: `${project.genre} · ${project.target_chapter_count} 章目标 · ${project.target_words_per_chapter} 字/章`,
-      words: isSelected ? drafts.value.length.toString() : '0',
-      reads: isSelected ? plans.value.length.toString() : '0',
-      favorites: isSelected ? acceptedDrafts.value.length.toString() : '0',
-      updated: isSelected ? '当前项目' : displayStatus(project.status),
-      cover: project.title.slice(0, 2),
-      coverTone: index % 3 === 0 ? 'dark' : index % 3 === 1 ? 'rose' : 'steel',
-    }
-  })
+const { workspaceDataSummary, workspaceMetrics, workspaceTasks, workspaceWorks } = useWorkspaceDashboard({
+  acceptedDrafts,
+  costSummary,
+  drafts,
+  events,
+  llmModeLabel,
+  newProjectForm,
+  plans,
+  projects,
+  promptTemplates,
+  readiness,
+  runtimeSettings,
+  runs,
+  selectedProject,
+  selectedProjectId,
+  selectedRun,
 })
-
-const workspaceDataSummary = computed(() => [
-  { label: '运行事件', value: `${events.value.length}`, up: '实时' },
-  { label: '提示词模板', value: `${promptTemplates.value.length}`, up: '可编辑' },
-  { label: '自动修订', value: `${runtimeSettings.value?.revision_max_attempts ?? 0}`, up: '轮' },
-  { label: '存储后端', value: displayStorageBackend(runtimeSettings.value?.storage_backend), up: '就绪' },
-])
-
-const workspaceTasks = computed<WorkspaceTask[]>(() => [
-  {
-    title: selectedProject.value ? '项目已选择' : '选择或创建项目',
-    progress: selectedProject.value ? selectedProject.value.title : '需要项目后才能运行',
-    badge: selectedProject.value ? '已完成' : '待处理',
-    type: (selectedProject.value ? 'success' : 'warning') as 'success' | 'warning',
-    tone: 'purple',
-    createProject: !selectedProject.value,
-    page: selectedProject.value ? 'workbench' : undefined,
-    mainPanel: 'run',
-  },
-  {
-    title: readiness.value?.ready ? '故事设定已就绪' : '完善故事设定',
-    progress: readiness.value?.ready ? '可开始自动连载' : `${readiness.value?.missing.length ?? 0} 项待补全`,
-    badge: readiness.value?.ready ? '已完成' : '进行中',
-    type: (readiness.value?.ready ? 'success' : 'info') as 'success' | 'info',
-    tone: 'green',
-    page: 'workbench',
-    sidePanel: 'bible',
-  },
-  {
-    title: selectedRun.value ? '运行任务已创建' : '启动自动连载',
-    progress: selectedRun.value ? `${selectedRun.value.completed_chapter_count}/${selectedRun.value.target_chapter_count} 章` : '等待启动',
-    badge: selectedRun.value ? displayStatus(selectedRun.value.status) : '待启动',
-    type: (selectedRun.value ? 'success' : 'warning') as 'success' | 'warning',
-    tone: 'orange',
-    page: 'workbench',
-    mainPanel: 'run',
-  },
-])
 
 function setNotice(message: string) {
   notice.value = message
