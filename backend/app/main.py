@@ -18,7 +18,7 @@ from app.core.errors import http_exception_handler, unhandled_exception_handler
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="SerialWriter Engine API", version="0.1.0")
+    app = FastAPI(title="aonarr API", version="0.1.0")
     settings = get_settings()
     app.add_middleware(
         CORSMiddleware,

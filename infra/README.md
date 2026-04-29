@@ -1,6 +1,6 @@
 # Infrastructure
 
-This folder contains self-hosted deployment support for SerialWriter Engine.
+This folder contains self-hosted deployment support for aonarr.
 
 Current scope:
 

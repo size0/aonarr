@@ -1,6 +1,6 @@
 # Backend
 
-FastAPI backend for SerialWriter Engine.
+FastAPI backend for aonarr.
 
 ## Run locally
 

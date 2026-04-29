@@ -1,6 +1,6 @@
 # Clean-room Development Log
 
-This log records the clean-room implementation boundary for SerialWriter Engine.
+This log records the clean-room implementation boundary for aonarr.
 
 ## Rule
 

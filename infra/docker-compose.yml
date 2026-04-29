@@ -4,7 +4,7 @@ services:
       context: ../backend
     environment:
       APP_ENV: development
-      APP_NAME: SerialWriter Engine
+      APP_NAME: aonarr
       ADMIN_USERNAME: admin
       ADMIN_PASSWORD: change-me
       SECRET_KEY: change-me

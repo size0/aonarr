@@ -1,6 +1,6 @@
 # Frontend
 
-Vue 3 + Vite frontend for SerialWriter Engine.
+Vue 3 + Vite frontend for aonarr.
 
 ## Run locally
 

@@ -873,7 +873,7 @@ onUnmounted(() => {
     <header class="site-header">
       <button class="brand" type="button" @click="navigateTo('studio')">
         <span class="brand-feather" />
-        <strong>SerialWriter</strong>
+        <strong>aonarr</strong>
       </button>
 
       <nav class="main-nav" aria-label="主导航">
@@ -913,7 +913,7 @@ onUnmounted(() => {
         </h1>
 
         <p>
-          SerialWriter Engine 将故事设定、章节计划、正文起草、质量审阅、自动修订和导出放进同一个自托管工作台，帮助作者把长篇小说生产流程变得稳定、透明、可持续。
+          aonarr 将故事设定、章节计划、正文起草、质量审阅、自动修订和导出放进同一个自托管工作台，帮助作者把长篇小说生产流程变得稳定、透明、可持续。
         </p>
 
         <div class="hero-actions">
@@ -1054,7 +1054,7 @@ onUnmounted(() => {
           <n-icon :component="CreateOutline" />
         </span>
         <span>
-          <strong>SerialWriter</strong>
+          <strong>aonarr</strong>
           <em>长篇小说自动连载工作台</em>
         </span>
       </button>
@@ -1094,7 +1094,7 @@ onUnmounted(() => {
             <span>都自动落成章节</span>
           </h1>
           <p>
-            从故事设定、章节规划、正文起草到质量审阅和自动修订，SerialWriter Engine 帮你把长篇小说生产流程整理成可控、可追踪、可自托管的工作台。
+            从故事设定、章节规划、正文起草到质量审阅和自动修订，aonarr 帮你把长篇小说生产流程整理成可控、可追踪、可自托管的工作台。
           </p>
 
           <div class="feature-list">
@@ -1115,7 +1115,7 @@ onUnmounted(() => {
             <div class="quote-author">
               <span>S</span>
               <div>
-                <strong>SerialWriter Engine</strong>
+                <strong>aonarr</strong>
                 <em>本地自动化原型</em>
               </div>
             </div>
@@ -1130,7 +1130,7 @@ onUnmounted(() => {
               <n-icon :component="LockClosedOutline" />
             </span>
             <h2>欢迎回来</h2>
-            <p>登录你的 SerialWriter 工作空间</p>
+            <p>登录你的 aonarr 工作空间</p>
           </div>
 
           <n-form class="login-form" :show-label="false" @submit.prevent="login">
@@ -1236,7 +1236,7 @@ onUnmounted(() => {
           <n-icon :component="ReaderOutline" />
         </span>
         <span>
-          <strong>SerialCraft</strong>
+          <strong>aonarr</strong>
           <em>小说创作与自动连载平台</em>
         </span>
       </button>

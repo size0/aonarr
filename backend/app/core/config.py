@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 
 class Settings(BaseModel):
-    app_name: str = os.getenv("APP_NAME", "SerialWriter Engine")
+    app_name: str = os.getenv("APP_NAME", "aonarr")
     app_env: str = os.getenv("APP_ENV", "development")
     admin_username: str = os.getenv("ADMIN_USERNAME", "admin")
     admin_password: str = os.getenv("ADMIN_PASSWORD", "change-me")
