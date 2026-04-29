@@ -5,6 +5,7 @@ import {
   requiresAuth,
   type PageName,
   type SettingsPanel,
+  type WorkspaceIndexPanel,
   type WorkbenchMainPanel,
   type WorkbenchSidePanel,
   type WorkspaceNavItem,
@@ -25,12 +26,21 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unexpected error'
 }
 
+const workspaceIndexNavLabels: Record<WorkspaceIndexPanel, string> = {
+  overview: '工作台',
+  works: '作品管理',
+  stats: '数据统计',
+  fans: '粉丝互动',
+  tasks: '任务中心',
+}
+
 export function useNavigation(source: UseNavigationSource) {
   const currentPage = ref<PageName>(pageFromPath(window.location.pathname))
   const showCreateProjectModal = ref(false)
   const workbenchMainPanel = ref<WorkbenchMainPanel>('run')
   const workbenchSidePanel = ref<WorkbenchSidePanel>('bible')
   const settingsPanel = ref<SettingsPanel>('llm')
+  const workspaceIndexPanel = ref<WorkspaceIndexPanel>('overview')
   const activeWorkspaceNavLabel = ref('')
 
   function defaultWorkspaceNavLabel(page: PageName) {
@@ -47,6 +57,9 @@ export function useNavigation(source: UseNavigationSource) {
 
   function navigateTo(page: PageName, workspaceNavLabel?: string) {
     currentPage.value = page
+    if (page !== 'index') {
+      workspaceIndexPanel.value = 'overview'
+    }
     activeWorkspaceNavLabel.value = workspaceNavLabel ?? defaultWorkspaceNavLabel(page)
     const path = page === 'studio' ? '/studio' : `/${page}`
     if (window.location.pathname !== path) {
@@ -59,6 +72,7 @@ export function useNavigation(source: UseNavigationSource) {
 
   function syncPageFromHistory() {
     currentPage.value = pageFromPath(window.location.pathname)
+    workspaceIndexPanel.value = 'overview'
     activeWorkspaceNavLabel.value = defaultWorkspaceNavLabel(currentPage.value)
     if (requiresAuth(currentPage.value) && !source.token.value) {
       navigateTo('login')
@@ -69,6 +83,9 @@ export function useNavigation(source: UseNavigationSource) {
   }
 
   function handleWorkspaceNav(item: WorkspaceNavItem) {
+    if (item.indexPanel) {
+      workspaceIndexPanel.value = item.indexPanel
+    }
     if (item.mainPanel) {
       workbenchMainPanel.value = item.mainPanel
     }
@@ -95,6 +112,11 @@ export function useNavigation(source: UseNavigationSource) {
     if (task.page) {
       navigateTo(task.page)
     }
+  }
+
+  function selectWorkspaceIndexPanel(panel: WorkspaceIndexPanel) {
+    workspaceIndexPanel.value = panel
+    navigateTo('index', workspaceIndexNavLabels[panel])
   }
 
   function selectWorkspaceProject(projectId: string) {
@@ -133,8 +155,10 @@ export function useNavigation(source: UseNavigationSource) {
     navigateTo,
     openCreateProjectModal,
     selectWorkspaceProject,
+    selectWorkspaceIndexPanel,
     settingsPanel,
     showCreateProjectModal,
+    workspaceIndexPanel,
     workbenchMainPanel,
     workbenchSidePanel,
   }

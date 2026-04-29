@@ -1816,6 +1816,14 @@ h3 {
   margin-top: 26px;
 }
 
+.workspace-page .index-focus-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.workspace-page .index-focus-panel {
+  grid-column: 1 / -1;
+}
+
 .workspace-page .panel {
   min-width: 0;
   padding: 0;

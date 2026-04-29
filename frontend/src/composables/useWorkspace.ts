@@ -4,12 +4,14 @@ export type PageName = 'studio' | 'login' | 'index' | 'workbench' | 'settings'
 export type WorkbenchMainPanel = 'run' | 'plans' | 'drafts' | 'events'
 export type WorkbenchSidePanel = 'bible' | 'project' | 'export'
 export type SettingsPanel = 'llm' | 'prompts' | 'runtime'
+export type WorkspaceIndexPanel = 'overview' | 'works' | 'stats' | 'fans' | 'tasks'
 
 export type WorkspaceNavItem = {
   label: string
   icon: Component
   page: PageName
   badge?: string
+  indexPanel?: WorkspaceIndexPanel
   mainPanel?: WorkbenchMainPanel
   sidePanel?: WorkbenchSidePanel
   settingsPanel?: SettingsPanel

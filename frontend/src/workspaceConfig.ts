@@ -68,18 +68,18 @@ export const studioFeatures = [
 ]
 
 export const workspaceNavItems: WorkspaceNavItem[] = [
-  { label: '工作台', icon: HomeOutline, page: 'index' },
-  { label: '作品管理', icon: DocumentTextOutline, page: 'index' },
+  { label: '工作台', icon: HomeOutline, page: 'index', indexPanel: 'overview' },
+  { label: '作品管理', icon: DocumentTextOutline, page: 'index', indexPanel: 'works' },
   { label: '章节管理', icon: ReaderOutline, page: 'workbench', mainPanel: 'drafts' },
   { label: '人物管理', icon: PeopleOutline, page: 'workbench', sidePanel: 'project' },
   { label: '大纲管理', icon: ListOutline, page: 'workbench', mainPanel: 'plans' },
   { label: '世界观设定', icon: GlobeOutline, page: 'workbench', sidePanel: 'bible' },
   { label: '素材库', icon: ImageOutline, page: 'workbench', sidePanel: 'project' },
-  { label: '数据统计', icon: StatsChartOutline, page: 'index' },
-  { label: '粉丝互动', icon: HeartOutline, page: 'index' },
+  { label: '数据统计', icon: StatsChartOutline, page: 'index', indexPanel: 'stats' },
+  { label: '粉丝互动', icon: HeartOutline, page: 'index', indexPanel: 'fans' },
   { label: '成本管理', icon: CashOutline, page: 'workbench', mainPanel: 'run' },
   { label: '运行日志', icon: MailOutline, page: 'workbench', badge: '实时', mainPanel: 'events' },
-  { label: '任务中心', icon: CheckboxOutline, page: 'index', badge: '3' },
+  { label: '任务中心', icon: CheckboxOutline, page: 'index', badge: '3', indexPanel: 'tasks' },
   { label: '设置', icon: SettingsOutline, page: 'settings', settingsPanel: 'llm' },
 ]
 

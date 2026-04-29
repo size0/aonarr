@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { Component } from 'vue'
 import { NButton, NIcon, NTag } from 'naive-ui'
 import { AddOutline, CheckmarkDoneOutline, ChevronBackOutline, ChevronForwardOutline } from '@vicons/ionicons5'
 import type { ChapterDraft, SerialRun } from '../types'
-import { displayStatus, type WorkspaceTask, type WorkspaceWork } from '../composables/useWorkspace'
+import { displayStatus, type WorkspaceIndexPanel, type WorkspaceTask, type WorkspaceWork } from '../composables/useWorkspace'
 import { calendarDays, chartLines, weekDays } from '../workspaceConfig'
 
 type WorkspaceMetric = {
@@ -31,6 +31,7 @@ const props = defineProps<{
   selectedProjectTitle: string
   username: string
   workspaceDataSummary: WorkspaceDataSummaryItem[]
+  workspaceIndexPanel: WorkspaceIndexPanel
   workspaceMetrics: WorkspaceMetric[]
   workspaceTasks: WorkspaceTask[]
   workspaceWorks: WorkspaceWork[]
@@ -39,12 +40,24 @@ const props = defineProps<{
 const emit = defineEmits<{
   openCreateProject: []
   refresh: []
+  selectIndexPanel: [panel: WorkspaceIndexPanel]
   selectWorkspaceProject: [projectId: string]
   setNotice: [message: string]
   workspaceTask: [task: WorkspaceTask]
 }>()
 
 const statsRange = ref('30天')
+
+const pageCopy = computed(() => {
+  const copy: Record<WorkspaceIndexPanel, { title: string; description: string }> = {
+    overview: { title: `下午好，${props.username}`, description: props.notice },
+    works: { title: '作品管理', description: '集中查看作品列表、创建新作品，并进入单本书生产工作台' },
+    stats: { title: '数据统计', description: '查看运行事件、提示词模板、自动修订和存储状态' },
+    fans: { title: '粉丝互动', description: '互动运营模块预留中，后续可接入评论、私信和读者反馈' },
+    tasks: { title: '任务中心', description: '按当前项目状态列出可执行的生产任务' },
+  }
+  return copy[props.workspaceIndexPanel]
+})
 
 function handleWorkMore(workId: string) {
   if (!workId) {
@@ -68,8 +81,8 @@ function selectStatsRange(range: string) {
   <section class="content">
     <div class="welcome-row">
       <div>
-        <h1>下午好，{{ username }} <span>👋</span></h1>
-        <p>{{ notice }} · 当前项目：{{ selectedProjectTitle }}</p>
+        <h1>{{ pageCopy.title }} <span v-if="workspaceIndexPanel === 'overview'">👋</span></h1>
+        <p>{{ pageCopy.description }} · 当前项目：{{ selectedProjectTitle }}</p>
       </div>
       <n-button type="primary" size="large" class="new-work-btn" @click="emit('openCreateProject')">
         <template #icon>
@@ -79,7 +92,7 @@ function selectStatsRange(range: string) {
       </n-button>
     </div>
 
-    <section class="metrics-grid">
+    <section v-if="workspaceIndexPanel === 'overview'" class="metrics-grid">
       <article v-for="metric in workspaceMetrics" :key="metric.label" :class="['metric-card', metric.tone]">
         <div class="metric-icon">
           <n-icon :component="metric.icon" />
@@ -102,11 +115,17 @@ function selectStatsRange(range: string) {
       </article>
     </section>
 
-    <section class="dashboard-grid">
-      <article class="panel works-panel">
+    <section :class="['dashboard-grid', { 'index-focus-grid': workspaceIndexPanel !== 'overview' }]">
+      <article
+        v-if="workspaceIndexPanel === 'overview' || workspaceIndexPanel === 'works'"
+        :class="['panel', 'works-panel', { 'index-focus-panel': workspaceIndexPanel === 'works' }]"
+      >
         <div class="panel-head">
           <h2>我的作品</h2>
-          <button type="button" @click="emit('refresh')">
+          <button
+            type="button"
+            @click="workspaceIndexPanel === 'works' ? emit('refresh') : emit('selectIndexPanel', 'works')"
+          >
             全部作品
             <n-icon :component="ChevronForwardOutline" />
           </button>
@@ -161,7 +180,7 @@ function selectStatsRange(range: string) {
         </div>
       </article>
 
-      <article class="panel calendar-panel">
+      <article v-if="workspaceIndexPanel === 'overview'" class="panel calendar-panel">
         <div class="panel-head">
           <h2>创作日历</h2>
           <button type="button" @click="notify('创作目标设置将在后续版本开放；当前可在生产驾驶舱设置运行目标。')">设置目标</button>
@@ -207,7 +226,10 @@ function selectStatsRange(range: string) {
         </div>
       </article>
 
-      <article class="panel stats-panel">
+      <article
+        v-if="workspaceIndexPanel === 'overview' || workspaceIndexPanel === 'stats'"
+        :class="['panel', 'stats-panel', { 'index-focus-panel': workspaceIndexPanel === 'stats' }]"
+      >
         <div class="panel-head">
           <h2>数据统计</h2>
           <div class="tabs">
@@ -235,10 +257,58 @@ function selectStatsRange(range: string) {
         </svg>
       </article>
 
-      <article class="panel task-panel">
+      <article v-if="workspaceIndexPanel === 'fans'" class="panel task-panel index-focus-panel">
+        <div class="panel-head">
+          <h2>粉丝互动</h2>
+          <button type="button" @click="notify('粉丝互动模块后续可接入评论、私信、投票和读者反馈。')">
+            接入说明
+            <n-icon :component="ChevronForwardOutline" />
+          </button>
+        </div>
+        <div class="task-list">
+          <div class="task-row">
+            <div class="task-check purple">
+              <n-icon :component="CheckmarkDoneOutline" />
+            </div>
+            <div>
+              <strong>评论汇总</strong>
+              <p>等待接入发布平台后同步读者评论和关键词</p>
+            </div>
+            <n-tag type="info" :bordered="false">待接入</n-tag>
+          </div>
+          <div class="task-row">
+            <div class="task-check green">
+              <n-icon :component="CheckmarkDoneOutline" />
+            </div>
+            <div>
+              <strong>读者反馈</strong>
+              <p>可作为后续自动修订和剧情规划的输入来源</p>
+            </div>
+            <n-tag type="warning" :bordered="false">预留</n-tag>
+          </div>
+          <div class="task-row">
+            <div class="task-check orange">
+              <n-icon :component="CheckmarkDoneOutline" />
+            </div>
+            <div>
+              <strong>章节投票</strong>
+              <p>适合用于分支剧情、番外方向和运营活动</p>
+            </div>
+            <n-tag type="info" :bordered="false">规划中</n-tag>
+          </div>
+        </div>
+      </article>
+
+      <article
+        v-if="workspaceIndexPanel === 'overview' || workspaceIndexPanel === 'tasks'"
+        :class="['panel', 'task-panel', { 'index-focus-panel': workspaceIndexPanel === 'tasks' }]"
+      >
         <div class="panel-head">
           <h2>任务中心</h2>
-          <button type="button" @click="notify('当前已展示全部可执行任务。')">
+          <button
+            type="button"
+            @click="workspaceIndexPanel === 'tasks' ? notify('当前已展示全部可执行任务。') : emit('selectIndexPanel', 'tasks')"
+          >
             更多任务
             <n-icon :component="ChevronForwardOutline" />
           </button>

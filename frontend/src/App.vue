@@ -70,8 +70,10 @@ const {
   navigateTo,
   openCreateProjectModal,
   selectWorkspaceProject,
+  selectWorkspaceIndexPanel,
   settingsPanel,
   showCreateProjectModal,
+  workspaceIndexPanel,
   workbenchMainPanel,
   workbenchSidePanel,
 } = useNavigation({
@@ -198,12 +200,14 @@ async function loadWorkspace() {
       :runs="runs"
       :selected-project-title="selectedProject?.title ?? '未选择项目'"
       :username="username"
+      :workspace-index-panel="workspaceIndexPanel"
       :workspace-data-summary="workspaceDataSummary"
       :workspace-metrics="workspaceMetrics"
       :workspace-tasks="workspaceTasks"
       :workspace-works="workspaceWorks"
       @open-create-project="openCreateProjectModal"
       @refresh="loadWorkspace"
+      @select-index-panel="selectWorkspaceIndexPanel"
       @select-workspace-project="selectWorkspaceProject"
       @set-notice="setNotice"
       @workspace-task="handleWorkspaceTask"
