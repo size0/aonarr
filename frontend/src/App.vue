@@ -71,10 +71,11 @@ import { createBiblePayload } from './biblePayload'
 
 const token = ref(localStorage.getItem('swe_token') ?? sessionStorage.getItem('swe_token') ?? '')
 const username = ref('admin')
-const password = ref('change-me')
+const password = ref('')
 const notice = ref('就绪')
 const busy = ref(false)
 const remember = ref(true)
+const showDevLoginHint = import.meta.env.DEV
 
 const currentPage = ref<PageName>(pageFromPath(window.location.pathname))
 
@@ -296,6 +297,11 @@ function handleWorkspaceTask(task: WorkspaceTask) {
   if (task.page) {
     navigateTo(task.page)
   }
+}
+
+function fillDevLogin() {
+  username.value = 'admin'
+  password.value = 'change-me'
 }
 
 function handleProjectSelection() {
@@ -965,9 +971,9 @@ onUnmounted(() => {
             </n-button>
           </div>
 
-          <p class="register-line">
+          <p v-if="showDevLoginHint" class="register-line">
             本地默认账号：
-            <button type="button" @click="username = 'admin'; password = 'change-me'">填入 admin / change-me</button>
+            <button type="button" @click="fillDevLogin">填入 admin / change-me</button>
           </p>
         </div>
       </section>

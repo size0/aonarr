@@ -21,13 +21,24 @@ from app.core.errors import http_exception_handler, unhandled_exception_handler
 logger = logging.getLogger("aonarr")
 
 
+def validate_production_settings() -> None:
+    settings = get_settings()
+    if settings.app_env != "production":
+        return
+    insecure_fields: list[str] = []
+    if settings.admin_password == "change-me":
+        insecure_fields.append("ADMIN_PASSWORD")
+    if settings.secret_key in {"change-me", "dev-secret-change-me"}:
+        insecure_fields.append("SECRET_KEY")
+    if insecure_fields:
+        fields = ", ".join(insecure_fields)
+        raise RuntimeError(f"Insecure default settings are not allowed in production: {fields}")
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="aonarr API", version="0.1.0")
+    validate_production_settings()
     settings = get_settings()
-    if settings.app_env == "production" and settings.admin_password == "change-me":
-        logger.warning("ADMIN_PASSWORD uses the default value in production")
-    if settings.app_env == "production" and settings.secret_key in {"change-me", "dev-secret-change-me"}:
-        logger.warning("SECRET_KEY uses the default value in production")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

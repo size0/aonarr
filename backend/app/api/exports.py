@@ -32,6 +32,19 @@ def selected_drafts(project_id: str, payload: ExportCreate) -> list[dict]:
     return sorted(drafts, key=lambda item: (item["chapter_number"], item["version"]))
 
 
+def public_export(item: dict) -> dict:
+    return {
+        "id": item["id"],
+        "project_id": item["project_id"],
+        "format": item["format"],
+        "status": item["status"],
+        "failure_message": item.get("failure_message"),
+        "created_at": item["created_at"],
+        "updated_at": item["updated_at"],
+        "download_url": f"/api/v1/projects/{item['project_id']}/exports/{item['id']}/file",
+    }
+
+
 @router.post("", status_code=202)
 def create_export(project_id: str, payload: ExportCreate, _: dict[str, str] = Depends(require_admin)) -> dict[str, dict]:
     project = ensure_project(project_id)
@@ -62,7 +75,7 @@ def create_export(project_id: str, payload: ExportCreate, _: dict[str, str] = De
         "created_at": now,
         "updated_at": now,
     }
-    return {"data": store.create_item("exports", item)}
+    return {"data": public_export(store.create_item("exports", item))}
 
 
 @router.get("/{export_id}")
@@ -71,7 +84,7 @@ def get_export(project_id: str, export_id: str, _: dict[str, str] = Depends(requ
     item = store.get_item("exports", export_id)
     if not item or item["project_id"] != project_id:
         raise api_error(404, "not_found", "Export not found")
-    return {"data": item}
+    return {"data": public_export(item)}
 
 
 @router.get("/{export_id}/file")
