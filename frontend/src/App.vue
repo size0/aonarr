@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import {
   requiresAuth,
-  type PageName,
 } from './composables/useWorkspace'
 import { useAuth } from './composables/useAuth'
 import { useNavigation } from './composables/useNavigation'
@@ -18,12 +17,6 @@ import WorkbenchPage from './components/WorkbenchPage.vue'
 import WorkspaceShell from './components/WorkspaceShell.vue'
 
 const eventSource = ref<EventSource | null>(null)
-let navigateToPage: (page: PageName) => void = () => {}
-
-function navigateTo(page: PageName) {
-  navigateToPage(page)
-}
-
 const {
   busy,
   canLoginSubmit,
@@ -33,11 +26,12 @@ const {
   notice,
   password,
   remember,
+  setNavigator,
   setNotice,
   showDevLoginHint,
   token,
   username,
-} = useAuth({ eventSource, navigateTo })
+} = useAuth({ eventSource })
 
 const {
   acceptedDrafts,
@@ -72,7 +66,7 @@ const {
   currentPage,
   handleWorkspaceNav,
   handleWorkspaceTask,
-  navigateTo: navigateToImpl,
+  navigateTo,
   openCreateProjectModal,
   selectWorkspaceProject,
   settingsPanel,
@@ -88,7 +82,7 @@ const {
   syncProjectFormFromSelectedProject,
   token,
 })
-navigateToPage = navigateToImpl
+setNavigator(navigateTo)
 const { workspaceDataSummary, workspaceMetrics, workspaceTasks, workspaceWorks } = useWorkspaceDashboard({
   acceptedDrafts,
   costSummary,

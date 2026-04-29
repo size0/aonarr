@@ -4,7 +4,6 @@ import type { PageName } from './useWorkspace'
 
 type UseAuthSource = {
   eventSource: Ref<EventSource | null>
-  navigateTo: (page: PageName) => void
 }
 
 function errorMessage(error: unknown): string {
@@ -12,6 +11,7 @@ function errorMessage(error: unknown): string {
 }
 
 export function useAuth(source: UseAuthSource) {
+  let navigateTo: (page: PageName) => void = () => {}
   const token = ref(localStorage.getItem('swe_token') ?? sessionStorage.getItem('swe_token') ?? '')
   const username = ref('admin')
   const password = ref('')
@@ -28,6 +28,10 @@ export function useAuth(source: UseAuthSource) {
   function fillDevLogin() {
     username.value = 'admin'
     password.value = 'change-me'
+  }
+
+  function setNavigator(nextNavigateTo: (page: PageName) => void) {
+    navigateTo = nextNavigateTo
   }
 
   async function login() {
@@ -47,7 +51,7 @@ export function useAuth(source: UseAuthSource) {
         localStorage.removeItem('swe_token')
       }
       setNotice('Logged in')
-      source.navigateTo('index')
+      navigateTo('index')
     } catch (error) {
       setNotice(errorMessage(error))
     } finally {
@@ -66,7 +70,7 @@ export function useAuth(source: UseAuthSource) {
     localStorage.removeItem('swe_token')
     sessionStorage.removeItem('swe_token')
     setNotice('Logged out')
-    source.navigateTo('login')
+    navigateTo('login')
   }
 
   return {
@@ -78,6 +82,7 @@ export function useAuth(source: UseAuthSource) {
     notice,
     password,
     remember,
+    setNavigator,
     setNotice,
     showDevLoginHint,
     token,
