@@ -31,7 +31,7 @@ import {
   StarOutline,
   StatsChartOutline,
 } from '@vicons/ionicons5'
-import { apiRequest, downloadFile, sseUrl } from './api'
+import { apiRequest } from './api'
 import {
   displayEventType,
   displayProfileName,
@@ -49,9 +49,9 @@ import {
   type WorkspaceNavItem,
   type WorkspaceTask,
 } from './composables/useWorkspace'
+import { useWorkspaceActions } from './composables/useWorkspaceActions'
 import { useWorkspaceDashboard } from './composables/useWorkspaceDashboard'
 import { useWorkspaceData } from './composables/useWorkspaceData'
-import type { ChapterDraft, Project, PromptTemplate, RunEvent, SerialRun } from './types'
 import {
   calendarDays,
   chartLines,
@@ -70,7 +70,6 @@ import {
   createDefaultProjectForm,
   createDefaultRunForm,
 } from './formDefaults'
-import { createBiblePayload } from './biblePayload'
 
 const token = ref(localStorage.getItem('swe_token') ?? sessionStorage.getItem('swe_token') ?? '')
 const username = ref('admin')
@@ -132,6 +131,35 @@ const { workspaceDataSummary, workspaceMetrics, workspaceTasks, workspaceWorks }
   selectedProject,
   selectedProjectId,
   selectedRun,
+})
+const {
+  createLLMProfile,
+  createProject,
+  exportMarkdown,
+  openEventStream,
+  resetPromptTemplate,
+  runAction,
+  saveBible,
+  savePromptTemplate,
+  setDraftStatus,
+  startRun,
+  testLLM,
+} = useWorkspaceActions({
+  bibleForm,
+  busy,
+  eventSource,
+  events,
+  llmForm,
+  llmProfiles,
+  loadProjectData,
+  loadWorkspace,
+  navigateTo,
+  newProjectForm,
+  runForm,
+  selectedProjectId,
+  selectedRunId,
+  setNotice,
+  showCreateProjectModal,
 })
 
 function setNotice(message: string) {
@@ -273,205 +301,6 @@ async function logout() {
 
 async function loadWorkspace() {
   await loadWorkspaceData(syncProjectFormFromSelectedProject)
-}
-
-async function createLLMProfile() {
-  busy.value = true
-  try {
-    await apiRequest('/api/v1/llm-profiles', {
-      method: 'POST',
-      body: JSON.stringify(llmForm.value),
-    })
-    setNotice('模型配置已创建')
-    await loadWorkspace()
-  } catch (error) {
-    setNotice(errorMessage(error))
-  } finally {
-    busy.value = false
-  }
-}
-
-async function testLLM(profileId: string) {
-  const result = await apiRequest<{
-    success: boolean
-    error_message?: string | null
-    mode?: string
-  }>(`/api/v1/llm-profiles/${profileId}/test`, { method: 'POST' })
-  const mode = result.mode ? `（${displayRuntimeMode(result.mode)}）` : ''
-  setNotice(result.success ? `模型测试通过${mode}` : String(result.error_message ?? '模型测试失败'))
-  await loadWorkspace()
-}
-
-async function savePromptTemplate(template: PromptTemplate) {
-  busy.value = true
-  try {
-    await apiRequest<PromptTemplate>(`/api/v1/prompt-templates/${template.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        name: template.name,
-        purpose: template.purpose,
-        system_template: template.system_template,
-        user_template: template.user_template,
-        temperature: Number(template.temperature),
-        max_tokens: template.max_tokens === null ? undefined : Number(template.max_tokens),
-      }),
-    })
-    setNotice(`提示词模板 ${template.id} 已保存`)
-    await loadWorkspace()
-  } catch (error) {
-    setNotice(errorMessage(error))
-  } finally {
-    busy.value = false
-  }
-}
-
-async function resetPromptTemplate(templateId: string) {
-  busy.value = true
-  try {
-    await apiRequest<PromptTemplate>(`/api/v1/prompt-templates/${templateId}/reset`, { method: 'POST' })
-    setNotice(`提示词模板 ${templateId} 已重置`)
-    await loadWorkspace()
-  } catch (error) {
-    setNotice(errorMessage(error))
-  } finally {
-    busy.value = false
-  }
-}
-
-async function setDraftStatus(draft: ChapterDraft, status: 'accepted' | 'needs_revision' | 'rejected') {
-  if (!selectedProjectId.value) return
-  busy.value = true
-  try {
-    if (status === 'accepted') {
-      await apiRequest<ChapterDraft>(`/api/v1/projects/${selectedProjectId.value}/drafts/${draft.id}/accept`, {
-        method: 'POST',
-      })
-      setNotice('草稿已通过；如果运行仍处于暂停状态，可以继续运行。')
-    } else {
-      await apiRequest<ChapterDraft>(`/api/v1/projects/${selectedProjectId.value}/drafts/${draft.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status }),
-      })
-      setNotice(`草稿已标记为${displayStatus(status)}`)
-    }
-    await loadProjectData()
-  } catch (error) {
-    setNotice(errorMessage(error))
-  } finally {
-    busy.value = false
-  }
-}
-
-async function createProject() {
-  busy.value = true
-  try {
-    const profileId = llmProfiles.value[0]?.id ?? null
-    const project = await apiRequest<Project>('/api/v1/projects', {
-      method: 'POST',
-      body: JSON.stringify({ ...newProjectForm.value, default_llm_profile_id: profileId }),
-    })
-    selectedProjectId.value = project.id
-    setNotice('作品已创建')
-    showCreateProjectModal.value = false
-    await loadWorkspace()
-    navigateTo('workbench')
-  } catch (error) {
-    setNotice(errorMessage(error))
-  } finally {
-    busy.value = false
-  }
-}
-
-async function saveBible() {
-  if (!selectedProjectId.value) return
-  busy.value = true
-  try {
-    await apiRequest(`/api/v1/projects/${selectedProjectId.value}/bible`, {
-      method: 'PUT',
-      body: JSON.stringify(createBiblePayload(bibleForm.value)),
-    })
-    setNotice('故事设定已保存')
-    await loadProjectData()
-  } catch (error) {
-    setNotice(errorMessage(error))
-  } finally {
-    busy.value = false
-  }
-}
-
-async function startRun() {
-  if (!selectedProjectId.value) return
-  busy.value = true
-  try {
-    const run = await apiRequest<SerialRun>(`/api/v1/projects/${selectedProjectId.value}/runs`, {
-      method: 'POST',
-      body: JSON.stringify({
-        mode: 'full_auto',
-        start_chapter_number: 1,
-        target_chapter_count: runForm.value.target_chapter_count,
-        cost_limit: runForm.value.cost_limit,
-      }),
-    })
-    selectedRunId.value = run.id
-    setNotice('自动连载已启动')
-    await loadProjectData()
-    openEventStream().catch((error) => setNotice(errorMessage(error)))
-  } catch (error) {
-    setNotice(errorMessage(error))
-  } finally {
-    busy.value = false
-  }
-}
-
-async function runAction(action: 'pause' | 'resume' | 'cancel') {
-  if (!selectedProjectId.value || !selectedRunId.value) return
-  try {
-    await apiRequest(`/api/v1/projects/${selectedProjectId.value}/runs/${selectedRunId.value}/${action}`, {
-      method: 'POST',
-    })
-    setNotice(`已发送${displayStatus(action)}请求`)
-    await loadProjectData()
-    if (action === 'resume') openEventStream().catch((error) => setNotice(errorMessage(error)))
-  } catch (error) {
-    setNotice(errorMessage(error))
-  }
-}
-
-async function openEventStream() {
-  if (!selectedProjectId.value || !selectedRunId.value) return
-  eventSource.value?.close()
-  const sseToken = await apiRequest<{ token: string }>('/api/v1/auth/sse-token', { method: 'POST' })
-  const eventsPath = `/api/v1/projects/${selectedProjectId.value}/runs/${selectedRunId.value}/events/stream`
-  const source = new EventSource(sseUrl(eventsPath, sseToken.token))
-  source.addEventListener('run_event', (event) => {
-    const parsed = JSON.parse((event as MessageEvent).data) as RunEvent
-    if (!events.value.some((item) => item.id === parsed.id)) {
-      events.value.push(parsed)
-    }
-    loadProjectData().catch(() => undefined)
-  })
-  source.onerror = () => {
-    source.close()
-  }
-  eventSource.value = source
-  setNotice('实时日志已连接')
-}
-
-async function exportMarkdown() {
-  if (!selectedProjectId.value) return
-  try {
-    const item = await apiRequest<{ id: string }>(`/api/v1/projects/${selectedProjectId.value}/exports`, {
-      method: 'POST',
-      body: JSON.stringify({ format: 'markdown' }),
-    })
-    const blob = await downloadFile(`/api/v1/projects/${selectedProjectId.value}/exports/${item.id}/file`)
-    const url = URL.createObjectURL(blob)
-    window.open(url, '_blank')
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
-    setNotice('导出任务已创建')
-  } catch (error) {
-    setNotice(errorMessage(error))
-  }
 }
 
 onMounted(() => {
