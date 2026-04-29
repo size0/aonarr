@@ -1,7 +1,7 @@
 [project]
-name = "serial-writer-engine-backend"
+name = "aonarr-backend"
 version = "0.1.0"
-description = "Clean-room backend for SerialWriter Engine"
+description = "Clean-room backend for aonarr"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.111,<1.0",

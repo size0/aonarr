@@ -13,7 +13,7 @@ def health_check() -> dict[str, dict[str, Any]]:
     return {
         "data": {
             "status": "ok",
-            "service": "serial-writer-engine-api",
+            "service": "aonarr-api",
             "time": datetime.now(UTC).isoformat(),
             "storage": storage_status(),
         }

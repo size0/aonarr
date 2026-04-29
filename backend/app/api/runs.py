@@ -4,7 +4,7 @@ import time
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
-from app.api.deps import get_token, require_admin
+from app.api.deps import require_admin, require_sse_admin
 from app.core.errors import api_error
 from app.core.security import utc_now
 from app.core.store import store
@@ -128,8 +128,7 @@ def list_events(project_id: str, run_id: str, _: dict[str, str] = Depends(requir
 
 
 @router.get("/{run_id}/events/stream")
-def stream_events(project_id: str, run_id: str, token: str | None = Depends(get_token)) -> StreamingResponse:
-    admin = require_admin(token)
+def stream_events(project_id: str, run_id: str, _: dict[str, str] = Depends(require_sse_admin)) -> StreamingResponse:
     ensure_project(project_id)
     run = store.get_item("runs", run_id)
     if not run or run["project_id"] != project_id:

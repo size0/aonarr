@@ -2,6 +2,7 @@ import json
 import threading
 import uuid
 from copy import deepcopy
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,9 +50,14 @@ class JsonStore:
     def new_id(self, prefix: str) -> str:
         return f"{prefix}_{uuid.uuid4().hex[:16]}"
 
-    def create_session(self, token: str, username: str) -> None:
+    def create_session(self, token: str, username: str, expires_at: str, token_type: str = "bearer") -> None:
         with self.lock:
-            self.data["sessions"][token] = {"username": username, "created_at": utc_now()}
+            self.data["sessions"][token] = {
+                "username": username,
+                "token_type": token_type,
+                "created_at": utc_now(),
+                "expires_at": expires_at,
+            }
             self._save()
 
     def delete_session(self, token: str) -> None:
@@ -62,7 +68,26 @@ class JsonStore:
     def get_session(self, token: str) -> dict[str, Any] | None:
         with self.lock:
             session = self.data["sessions"].get(token)
-            return deepcopy(session) if session else None
+            if not session:
+                return None
+            expires_at = session.get("expires_at")
+            if not expires_at:
+                self.data["sessions"].pop(token, None)
+                self._save()
+                return None
+            try:
+                expires_at_dt = datetime.fromisoformat(expires_at)
+            except ValueError:
+                self.data["sessions"].pop(token, None)
+                self._save()
+                return None
+            if expires_at_dt.tzinfo is None:
+                expires_at_dt = expires_at_dt.replace(tzinfo=UTC)
+            if expires_at_dt <= datetime.now(UTC):
+                self.data["sessions"].pop(token, None)
+                self._save()
+                return None
+            return deepcopy(session)
 
     def list_items(self, collection: str) -> list[dict[str, Any]]:
         with self.lock:

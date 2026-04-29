@@ -5,6 +5,8 @@ from fastapi.testclient import TestClient
 
 _tmp_data = tempfile.TemporaryDirectory()
 os.environ["DATA_DIR"] = _tmp_data.name
+os.environ["ADMIN_USERNAME"] = "admin"
+os.environ["ADMIN_PASSWORD"] = "change-me"
 
 from app.main import app
 
@@ -16,6 +18,23 @@ def auth_headers() -> dict[str, str]:
     assert response.status_code == 200
     token = response.json()["data"]["token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+def test_login_uses_configured_admin_username() -> None:
+    response = client.post("/api/v1/auth/login", json={"username": "root", "password": "change-me"})
+    assert response.status_code == 401
+
+
+def test_sse_token_requires_admin_and_returns_short_lived_token() -> None:
+    unauthorized = client.post("/api/v1/auth/sse-token")
+    assert unauthorized.status_code == 401
+
+    response = client.post("/api/v1/auth/sse-token", headers=auth_headers())
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["token_type"] == "sse"
+    assert payload["token"]
+    assert payload["expires_at"]
 
 
 def test_health_check() -> None:

@@ -10,7 +10,7 @@ services:
       SECRET_KEY: change-me
       DATA_DIR: /app/local-data
       STORAGE_BACKEND: json
-      DATABASE_URL: postgresql://serial_writer:change-me@postgres:5432/serial_writer
+      DATABASE_URL: postgresql://aonarr:change-me@postgres:5432/aonarr
       CORS_ORIGINS: http://localhost:5173
       LLM_MODE: mock
       LLM_REQUEST_TIMEOUT_SECONDS: 30
@@ -36,8 +36,8 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: serial_writer
-      POSTGRES_USER: serial_writer
+      POSTGRES_DB: aonarr
+      POSTGRES_USER: aonarr
       POSTGRES_PASSWORD: change-me
     ports:
       - "5432:5432"

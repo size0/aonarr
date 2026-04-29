@@ -42,7 +42,7 @@ $env:STORAGE_BACKEND = "json"
 PostgreSQL schema migrations are available under `migrations`.
 
 ```powershell
-$env:DATABASE_URL = "postgresql://serial_writer:change-me@localhost:5432/serial_writer"
+$env:DATABASE_URL = "postgresql://aonarr:change-me@localhost:5432/aonarr"
 python scripts\apply_migrations.py
 ```
 

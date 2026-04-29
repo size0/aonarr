@@ -2,7 +2,7 @@ import base64
 import hashlib
 import hmac
 import secrets
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from cryptography.fernet import Fernet
 
@@ -11,6 +11,10 @@ from app.core.config import get_settings
 
 def utc_now() -> str:
     return datetime.now(UTC).isoformat()
+
+
+def utc_after(seconds: int) -> str:
+    return (datetime.now(UTC) + timedelta(seconds=seconds)).isoformat()
 
 
 def verify_admin_password(password: str) -> bool:

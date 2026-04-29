@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, type Component } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { NButton, NCheckbox, NForm, NFormItem, NIcon, NInput, NTag } from 'naive-ui'
 import {
   AddOutline,
@@ -44,7 +44,25 @@ import {
   StarOutline,
   StatsChartOutline,
 } from '@vicons/ionicons5'
-import { apiRequest, sseUrl } from './api'
+import { apiRequest, downloadFile, sseUrl } from './api'
+import {
+  displayEventType,
+  displayProfileName,
+  displayProviderType,
+  displayReadinessSection,
+  displayRuntimeMode,
+  displayStatus,
+  displayStorageBackend,
+  pageFromPath,
+  requiresAuth,
+  type PageName,
+  type SettingsPanel,
+  type WorkbenchMainPanel,
+  type WorkbenchSidePanel,
+  type WorkspaceNavItem,
+  type WorkspaceTask,
+  type WorkspaceWork,
+} from './composables/useWorkspace'
 import type { ChapterDraft, ChapterPlan, LLMProfile, Project, PromptTemplate, Readiness, RunEvent, RuntimeSettings, SerialRun } from './types'
 
 const token = ref(localStorage.getItem('swe_token') ?? sessionStorage.getItem('swe_token') ?? '')
@@ -53,51 +71,6 @@ const password = ref('change-me')
 const notice = ref('就绪')
 const busy = ref(false)
 const remember = ref(true)
-type PageName = 'studio' | 'login' | 'index' | 'workbench' | 'settings'
-type WorkbenchMainPanel = 'run' | 'plans' | 'drafts' | 'events'
-type WorkbenchSidePanel = 'bible' | 'project' | 'export'
-type SettingsPanel = 'llm' | 'prompts' | 'runtime'
-type WorkspaceNavItem = {
-  label: string
-  icon: Component
-  page: PageName
-  badge?: string
-  mainPanel?: WorkbenchMainPanel
-  sidePanel?: WorkbenchSidePanel
-  settingsPanel?: SettingsPanel
-}
-type WorkspaceTask = {
-  title: string
-  progress: string
-  badge: string
-  type: 'success' | 'warning' | 'info'
-  tone: string
-  createProject?: boolean
-  page?: PageName
-  mainPanel?: WorkbenchMainPanel
-  sidePanel?: WorkbenchSidePanel
-}
-type WorkspaceWork = {
-  id: string
-  title: string
-  status: string
-  statusType: 'success' | 'info'
-  meta: string
-  words: string
-  reads: string
-  favorites: string
-  updated: string
-  cover: string
-  coverTone: string
-}
-
-function pageFromPath(pathname: string): PageName {
-  if (pathname === '/login') return 'login'
-  if (pathname === '/index') return 'index'
-  if (pathname === '/workbench') return 'workbench'
-  if (pathname === '/settings') return 'settings'
-  return 'studio'
-}
 
 const currentPage = ref<PageName>(pageFromPath(window.location.pathname))
 
@@ -155,100 +128,6 @@ const acceptedDrafts = computed(() => drafts.value.filter((item) => item.status 
 const needsRevisionDrafts = computed(() => drafts.value.filter((item) => item.status === 'needs_revision'))
 const llmModeLabel = computed(() => displayRuntimeMode(runtimeSettings.value?.llm_mode))
 const canLoginSubmit = computed(() => username.value.trim().length > 0 && password.value.trim().length > 0)
-
-function displayStatus(status?: string | null) {
-  if (!status) return '未知'
-  const statusMap: Record<string, string> = {
-    active: '进行中',
-    draft: '草稿',
-    pending: '等待中',
-    queued: '排队中',
-    running: '运行中',
-    paused: '已暂停',
-    pause: '暂停',
-    resume: '继续',
-    completed: '已完成',
-    succeeded: '已成功',
-    failed: '失败',
-    cancelled: '已取消',
-    cancel: '取消',
-    accepted: '已通过',
-    needs_revision: '需修订',
-    rejected: '已拒绝',
-    planned: '已规划',
-    generated: '已生成',
-    in_progress: '进行中',
-    untested: '未测试',
-    ready: '已就绪',
-    enabled: '已启用',
-    disabled: '已停用',
-  }
-  return statusMap[status] ?? status.replace(/_/g, ' ')
-}
-
-function displayProviderType(providerType?: string | null) {
-  if (!providerType) return '未知供应商'
-  const providerMap: Record<string, string> = {
-    openai_compatible: 'OpenAI 兼容接口',
-    openai: 'OpenAI 官方接口',
-    deepseek: 'DeepSeek 接口',
-    mock: '模拟模型',
-  }
-  return providerMap[providerType] ?? providerType.replace(/_/g, ' ')
-}
-
-function displayRuntimeMode(mode?: string | null) {
-  if (!mode) return '未知'
-  const modeMap: Record<string, string> = {
-    mock: '模拟模式',
-    live: '真实调用',
-  }
-  return modeMap[mode] ?? mode
-}
-
-function displayStorageBackend(storageBackend?: string | null) {
-  if (!storageBackend) return '未知'
-  const storageMap: Record<string, string> = {
-    json: '本地 JSON',
-    postgres: 'PostgreSQL',
-  }
-  return storageMap[storageBackend] ?? storageBackend
-}
-
-function displayProfileName(name: string) {
-  if (name === 'Local OpenAI Compatible') return '本地 OpenAI 兼容模型'
-  return name
-}
-
-function displayEventType(eventType?: string | null) {
-  if (!eventType) return '事件'
-  const eventMap: Record<string, string> = {
-    run_started: '运行开始',
-    run_completed: '运行完成',
-    run_failed: '运行失败',
-    chapter_planned: '章节已规划',
-    draft_generated: '草稿已生成',
-    draft_reviewed: '草稿已审阅',
-    revision_requested: '请求修订',
-    cost_updated: '成本更新',
-    info: '信息',
-    warning: '警告',
-    error: '错误',
-  }
-  return eventMap[eventType] ?? eventType.replace(/_/g, ' ')
-}
-
-function displayReadinessSection(section?: string | null) {
-  if (!section) return '检查项'
-  const sectionMap: Record<string, string> = {
-    premise: '故事前提',
-    world_summary: '世界观摘要',
-    tone_profile: '文风设定',
-    llm_profile: '模型配置',
-    prompt_templates: '提示词模板',
-  }
-  return sectionMap[section] ?? section.replace(/_/g, ' ')
-}
 
 const loginFeatures = [
   { title: '自动连载', desc: '规划、起草、审阅和修订串成稳定生产线。', icon: CreateOutline },
@@ -443,10 +322,6 @@ function setNotice(message: string) {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unexpected error'
-}
-
-function requiresAuth(page: PageName) {
-  return page === 'index' || page === 'workbench' || page === 'settings'
 }
 
 function navigateTo(page: PageName) {
@@ -792,7 +667,7 @@ async function startRun() {
     selectedRunId.value = run.id
     setNotice('自动连载已启动')
     await loadProjectData()
-    openEventStream()
+    openEventStream().catch((error) => setNotice(errorMessage(error)))
   } catch (error) {
     setNotice(errorMessage(error))
   } finally {
@@ -808,7 +683,7 @@ async function runAction(action: 'pause' | 'resume' | 'cancel') {
     })
     setNotice(`已发送${displayStatus(action)}请求`)
     await loadProjectData()
-    if (action === 'resume') openEventStream()
+    if (action === 'resume') openEventStream().catch((error) => setNotice(errorMessage(error)))
   } catch (error) {
     setNotice(errorMessage(error))
   }
@@ -822,10 +697,11 @@ async function loadEvents() {
   events.value = await apiRequest<RunEvent[]>(`/api/v1/projects/${selectedProjectId.value}/runs/${selectedRunId.value}/events`)
 }
 
-function openEventStream() {
+async function openEventStream() {
   if (!selectedProjectId.value || !selectedRunId.value) return
   eventSource.value?.close()
-  const source = new EventSource(sseUrl(`/api/v1/projects/${selectedProjectId.value}/runs/${selectedRunId.value}/events/stream`))
+  const sseToken = await apiRequest<{ token: string }>('/api/v1/auth/sse-token', { method: 'POST' })
+  const source = new EventSource(sseUrl(`/api/v1/projects/${selectedProjectId.value}/runs/${selectedRunId.value}/events/stream`, sseToken.token))
   source.addEventListener('run_event', (event) => {
     const parsed = JSON.parse((event as MessageEvent).data) as RunEvent
     if (!events.value.some((item) => item.id === parsed.id)) {
@@ -847,7 +723,10 @@ async function exportMarkdown() {
       method: 'POST',
       body: JSON.stringify({ format: 'markdown' }),
     })
-    window.open(sseUrl(`/api/v1/projects/${selectedProjectId.value}/exports/${item.id}/file`), '_blank')
+    const blob = await downloadFile(`/api/v1/projects/${selectedProjectId.value}/exports/${item.id}/file`)
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
     setNotice('导出任务已创建')
   } catch (error) {
     setNotice(errorMessage(error))

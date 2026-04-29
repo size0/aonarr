@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,10 +18,16 @@ from app.api.runs import router as runs_router
 from app.core.config import get_settings
 from app.core.errors import http_exception_handler, unhandled_exception_handler
 
+logger = logging.getLogger("aonarr")
+
 
 def create_app() -> FastAPI:
     app = FastAPI(title="aonarr API", version="0.1.0")
     settings = get_settings()
+    if settings.app_env == "production" and settings.admin_password == "change-me":
+        logger.warning("ADMIN_PASSWORD uses the default value in production")
+    if settings.app_env == "production" and settings.secret_key in {"change-me", "dev-secret-change-me"}:
+        logger.warning("SECRET_KEY uses the default value in production")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
