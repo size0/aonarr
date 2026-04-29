@@ -1,7 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { NButton, NIcon } from 'naive-ui'
-import { ChevronBackOutline } from '@vicons/ionicons5'
+import {
+  AddOutline,
+  ChevronBackOutline,
+  CopyOutline,
+  CreateOutline,
+  EllipsisHorizontalOutline,
+  SearchOutline,
+  SettingsOutline,
+} from '@vicons/ionicons5'
 import type {
   createDefaultBibleForm,
   createDefaultProjectForm,
@@ -21,6 +29,18 @@ type ProjectForm = ReturnType<typeof createDefaultProjectForm>
 type RunForm = ReturnType<typeof createDefaultRunForm>
 type DraftStatus = 'accepted' | 'needs_revision' | 'rejected'
 type RunControlAction = 'pause' | 'resume' | 'cancel'
+type ChapterFilter = 'all' | 'published' | 'draft'
+type ChapterRow = {
+  id: string
+  chapter_number: number
+  title: string
+  summary: string
+  word_count: number
+  status: string
+  version: number | null
+  source: 'draft' | 'plan'
+  draft?: ChapterDraft
+}
 
 const props = defineProps<{
   acceptedDrafts: ChapterDraft[]
@@ -81,6 +101,73 @@ const sidePanelModel = computed({
   get: () => props.workbenchSidePanel,
   set: (value: WorkbenchSidePanel) => emit('update:workbenchSidePanel', value),
 })
+
+const chapterFilter = ref<ChapterFilter>('all')
+const chapterSearch = ref('')
+
+const publishedDrafts = computed(() => props.drafts.filter((item) => item.status === 'accepted'))
+const draftChapterCount = computed(() => props.drafts.filter((item) => item.status !== 'accepted').length)
+const totalWords = computed(() => props.drafts.reduce((sum, item) => sum + item.word_count, 0))
+const totalChapterCount = computed(() => Math.max(props.selectedProject?.target_chapter_count ?? 0, props.plans.length, props.drafts.length))
+const chapterCoverText = computed(() => props.selectedProject?.title.slice(0, 2) || '作品')
+
+const chapterRows = computed<ChapterRow[]>(() => {
+  if (props.drafts.length) {
+    return [...props.drafts]
+      .sort((left, right) => left.chapter_number - right.chapter_number)
+      .map((draft) => ({
+        id: draft.id,
+        chapter_number: draft.chapter_number,
+        title: draft.title,
+        summary: draft.review_summary || draft.body,
+        word_count: draft.word_count,
+        status: draft.status,
+        version: draft.version,
+        source: 'draft',
+        draft,
+      }))
+  }
+  return [...props.plans]
+    .sort((left, right) => left.chapter_number - right.chapter_number)
+    .map((plan) => ({
+      id: plan.id,
+      chapter_number: plan.chapter_number,
+      title: plan.title_hint,
+      summary: [plan.goal, plan.conflict, plan.hook].filter(Boolean).join('，'),
+      word_count: 0,
+      status: plan.status,
+      version: null,
+      source: 'plan',
+    }))
+})
+
+const filteredChapterRows = computed(() => {
+  const keyword = chapterSearch.value.trim().toLowerCase()
+  return chapterRows.value.filter((row) => {
+    const matchesFilter =
+      chapterFilter.value === 'all' ||
+      (chapterFilter.value === 'published' ? row.status === 'accepted' : row.status !== 'accepted')
+    const matchesSearch =
+      !keyword ||
+      row.title.toLowerCase().includes(keyword) ||
+      row.summary.toLowerCase().includes(keyword) ||
+      String(row.chapter_number).includes(keyword)
+    return matchesFilter && matchesSearch
+  })
+})
+
+function chapterSummary(summary: string) {
+  return summary.length > 68 ? `${summary.slice(0, 68)}...` : summary
+}
+
+function openNewChapterFlow() {
+  mainPanelModel.value = 'run'
+  emit('setNotice', '请在生产驾驶舱启动运行生成新章节。')
+}
+
+function notifyChapterAction(message: string) {
+  emit('setNotice', message)
+}
 </script>
 
 <template>
@@ -103,6 +190,138 @@ const sidePanelModel = computed({
       <p>生产工作台是单本书的生产空间，用来配置故事设定、启动自动连载、审阅草稿和查看运行日志。</p>
       <n-button type="primary" @click="emit('openCreateProject')">创建作品</n-button>
     </div>
+
+    <section v-else-if="mainPanelModel === 'drafts'" class="chapter-manager-view">
+      <header class="chapter-manager-header">
+        <div>
+          <h1>章节管理</h1>
+          <p>管理作品章节，调整章节顺序和内容</p>
+        </div>
+        <div class="chapter-manager-actions">
+          <button class="chapter-primary-button" type="button" @click="openNewChapterFlow">
+            <n-icon :component="AddOutline" />
+            新建章节
+          </button>
+          <button class="chapter-icon-button" type="button" aria-label="更多操作" @click="notifyChapterAction('更多章节操作将在后续版本开放。')">
+            <n-icon :component="EllipsisHorizontalOutline" />
+          </button>
+        </div>
+      </header>
+
+      <section class="chapter-book-card">
+        <div class="chapter-book-info">
+          <div class="chapter-cover">{{ chapterCoverText }}</div>
+          <div>
+            <h2>{{ selectedProject.title }}</h2>
+            <p>{{ selectedProject.genre }} · {{ selectedProject.target_chapter_count }} 章目标 · {{ selectedProject.target_words_per_chapter }} 字/章</p>
+          </div>
+        </div>
+        <div class="chapter-book-stats">
+          <div>
+            <span>已发布章节</span>
+            <strong>{{ publishedDrafts.length }}</strong>
+          </div>
+          <div>
+            <span>草稿章节</span>
+            <strong>{{ draftChapterCount }}</strong>
+          </div>
+          <div>
+            <span>总字数</span>
+            <strong>{{ totalWords.toLocaleString() }}</strong>
+          </div>
+        </div>
+        <button class="chapter-settings-button" type="button" @click="notifyChapterAction('章节设置将在后续版本开放；当前可在作品资料中维护项目设定。')">
+          <n-icon :component="SettingsOutline" />
+          章节设置
+        </button>
+      </section>
+
+      <section class="chapter-table-panel">
+        <div class="chapter-toolbar">
+          <div class="chapter-filter-tabs">
+            <button :class="{ active: chapterFilter === 'all' }" type="button" @click="chapterFilter = 'all'">
+              全部章节 <span>{{ totalChapterCount }}</span>
+            </button>
+            <button :class="{ active: chapterFilter === 'published' }" type="button" @click="chapterFilter = 'published'">
+              已发布 <span>{{ publishedDrafts.length }}</span>
+            </button>
+            <button :class="{ active: chapterFilter === 'draft' }" type="button" @click="chapterFilter = 'draft'">
+              草稿 <span>{{ draftChapterCount }}</span>
+            </button>
+          </div>
+          <div class="chapter-tools">
+            <button type="button" @click="notifyChapterAction('批量操作将在后续版本开放。')">批量操作</button>
+            <select aria-label="选择卷">
+              <option>全部卷</option>
+              <option>卷一</option>
+            </select>
+            <select aria-label="排序">
+              <option>排序</option>
+              <option>章节升序</option>
+              <option>章节降序</option>
+            </select>
+            <label class="chapter-search">
+              <n-icon :component="SearchOutline" />
+              <input v-model="chapterSearch" placeholder="搜索章节标题..." />
+            </label>
+          </div>
+        </div>
+
+        <div class="chapter-table">
+          <div class="chapter-table-head">
+            <span>章节</span>
+            <span>卷</span>
+            <span>字数</span>
+            <span>更新时间</span>
+            <span>状态</span>
+            <span>操作</span>
+          </div>
+          <div v-if="!filteredChapterRows.length" class="chapter-empty-row">
+            暂无匹配章节，启动生产运行后会自动生成章节内容。
+          </div>
+          <article v-for="row in filteredChapterRows" :key="row.id" class="chapter-table-row">
+            <div class="chapter-title-cell">
+              <button type="button" aria-label="拖拽排序" @click="notifyChapterAction('拖拽排序将在后续版本开放。')">⋮⋮</button>
+              <div>
+                <strong>第{{ row.chapter_number }}章 {{ row.title }}</strong>
+                <p>{{ chapterSummary(row.summary) }}</p>
+              </div>
+            </div>
+            <span>卷一 · 青云起</span>
+            <span>{{ row.word_count.toLocaleString() }}</span>
+            <span>{{ row.draft ? `版本 ${row.version}` : '未生成草稿' }}</span>
+            <span :class="['chapter-status', row.status === 'accepted' ? 'published' : 'draft']">
+              {{ row.status === 'accepted' ? '已发布' : displayStatus(row.status) }}
+            </span>
+            <div class="chapter-row-actions">
+              <button
+                type="button"
+                :disabled="!row.draft || busy"
+                aria-label="编辑章节"
+                @click="row.draft ? notifyChapterAction('章节编辑器将在后续版本开放。') : notifyChapterAction('该章节还没有生成草稿。')"
+              >
+                <n-icon :component="CreateOutline" />
+              </button>
+              <button type="button" aria-label="复制章节" @click="notifyChapterAction('复制章节将在后续版本开放。')">
+                <n-icon :component="CopyOutline" />
+              </button>
+              <button type="button" aria-label="更多章节操作" @click="notifyChapterAction('更多章节操作将在后续版本开放。')">
+                <n-icon :component="EllipsisHorizontalOutline" />
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <footer class="chapter-pagination">
+          <span>共 {{ filteredChapterRows.length }} 章</span>
+          <div>
+            <button type="button" @click="notifyChapterAction('上一页将在章节数量更多时开放。')">‹</button>
+            <button class="active" type="button">1</button>
+            <button type="button" @click="notifyChapterAction('下一页将在章节数量更多时开放。')">›</button>
+          </div>
+        </footer>
+      </section>
+    </section>
 
     <section v-else class="workbench-layout">
       <aside class="panel chapter-rail">
@@ -131,7 +350,6 @@ const sidePanelModel = computed({
             v-for="draft in drafts"
             :key="draft.id"
             type="button"
-            :class="{ active: mainPanelModel === 'drafts' }"
             @click="mainPanelModel = 'drafts'"
           >
             <span>第{{ draft.chapter_number }}章</span>
@@ -145,7 +363,7 @@ const sidePanelModel = computed({
         <div class="workbench-tabs">
           <button :class="{ active: mainPanelModel === 'run' }" type="button" @click="mainPanelModel = 'run'">生产驾驶舱</button>
           <button :class="{ active: mainPanelModel === 'plans' }" type="button" @click="mainPanelModel = 'plans'">章节计划</button>
-          <button :class="{ active: mainPanelModel === 'drafts' }" type="button" @click="mainPanelModel = 'drafts'">草稿审阅</button>
+          <button type="button" @click="mainPanelModel = 'drafts'">章节管理</button>
           <button :class="{ active: mainPanelModel === 'events' }" type="button" @click="mainPanelModel = 'events'">运行日志</button>
         </div>
 
@@ -203,28 +421,6 @@ const sidePanelModel = computed({
               <em>{{ plan.hook }}</em>
             </article>
           </div>
-        </article>
-
-        <article v-else-if="mainPanelModel === 'drafts'" class="panel">
-          <div class="panel-head">
-            <h2>草稿审阅</h2>
-            <button type="button" :disabled="!acceptedDrafts.length" @click="emit('exportMarkdown')">导出文稿</button>
-          </div>
-          <article v-for="draft in drafts" :key="draft.id" class="draft-card">
-            <h3>{{ draft.title }}</h3>
-            <div class="draft-meta">
-              <span>{{ displayStatus(draft.status) }}</span>
-              <span v-if="draft.quality_score !== undefined && draft.quality_score !== null">评分 {{ draft.quality_score }}</span>
-              <span>版本 {{ draft.version }}</span>
-            </div>
-            <div class="button-row">
-              <button class="small-button" type="button" :disabled="busy" @click="emit('setDraftStatus', draft, 'accepted')">通过</button>
-              <button class="small-button" type="button" :disabled="busy" @click="emit('setDraftStatus', draft, 'needs_revision')">需要修订</button>
-              <button class="small-button" type="button" :disabled="busy" @click="emit('setDraftStatus', draft, 'rejected')">拒绝</button>
-            </div>
-            <p v-if="draft.review_summary" class="review-summary">{{ draft.review_summary }}</p>
-            <p>{{ draft.body }}</p>
-          </article>
         </article>
 
         <article v-else class="panel">
