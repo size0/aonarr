@@ -19,8 +19,8 @@
 
 | Claude | 任务 | 分支 | 状态 | PR | 完成时间 | 备注 |
 |---|---|---|---|---|---|---|
-| **A** | editor_mode + hard_rules + 审稿 API | `feat/track-f/week1-editor-mode` | 🟢 done | 待开 PR | 2026-05-12 | Cascade 接手完成。63/63 测试通过 |
-| **B** | event_store + Event/Session 表 + 迁移 | `feat/track-f/week2-event-store` | 🔵 pending | – | – | 暂停，等 Phase 1 跑通 |
+| **A** | editor_mode + hard_rules + 审稿 API | `feat/track-f/week1-editor-mode` | 🟢 merged | `bd08c28` | 2026-05-12 | Cascade 接手完成。63/63 测试通过 |
+| **B** | event_store + Event/Session 表 + 迁移 | `feat/track-f/week2-event-store` | � merged | `6ba3d83` | 2026-05-12 | Cascade 接手完成。22/22 测试 + alembic 三连过 |
 
 **Phase 1 验收标准**：
 - A 和 B 两个 PR 都已 review + merge 到 `main`
