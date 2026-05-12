@@ -35,7 +35,16 @@
 
 | Claude | 任务 | 分支 | 状态 | PR | 完成时间 | 备注 |
 |---|---|---|---|---|---|---|
-| **C** | book_daemon + daemon_pool + llm_quota | `feat/track-f/week3-daemon` | 🔵 pending | – | – | 等 Phase 1 完成 |
+| **C** | book_daemon + daemon_pool + llm_quota | `feat/track-f/week3-daemon` | � merged | TBD | 2026-05-12 | Cascade 接手实现。36/36 测试 + alembic 三连过 |
+
+**Phase 2 验收标准（全部 ✅）**：
+- ✅ `BookState` 模型 + alembic 迁移 `b2c3d4e5f6a7`
+- ✅ `LLMQuotaScheduler` 支持容量 / per-book / 优先级 / 时间窗口
+- ✅ `BookProductionDaemon` 完整生命周期 + 事件钩子 + 心跳
+- ✅ `DaemonPool` 多书并发 + spawn/pause/resume/stop/list/shutdown
+- ✅ HTTP API: `POST /managed/books/{bid}/daemon/{start,pause,resume,stop}`, `GET /managed/books/{bid}/state`, `GET /managed/daemons`
+- ✅ 36/36 测试全过（llm_quota 10 + book_daemon/pool 15 + http e2e 11）
+- ✅ 全仓回归 202/202 通过（含 75 个老测试）
 
 ---
 

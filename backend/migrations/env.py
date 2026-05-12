@@ -18,6 +18,7 @@ if config.config_file_name is not None:
 from app.db.connection import Base  # noqa: E402
 from app.models import novel, analysis, publishing, learning  # noqa: F401, E402
 from app.models import events as _events_model  # noqa: F401, E402  # Track F · Week 2
+from app.models import book_state as _book_state_model  # noqa: F401, E402  # Track F · Week 3
 from app.llm.profiles import LLMProfileRow, StageBindingRow, LLMConfigMeta  # noqa: F401, E402
 
 target_metadata = Base.metadata

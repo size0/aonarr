@@ -1,8 +1,9 @@
 """Track F · Managed Agents · /managed 路由
 
 只放 Track F 命名空间下的端点。
-- review_chapter 由 Claude-A (Week 1) 引入
-- get_events    由 Phase 1 后置补全（Coordinator）
+- review_chapter   Claude-A (Week 1)
+- get_events       Phase 1 wrap (Coordinator)
+- daemon 控制      Claude-C (Week 3)
 """
 from __future__ import annotations
 
@@ -10,9 +11,12 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.db.connection import get_db
+from app.db.connection import SessionLocal, get_db
+from app.models.book_state import BookState
+from app.services.agents import DaemonPool, get_default_pool
 from app.services.events.event_store import EventStore
 from app.services.inspiration.editor_mode import MuyuEditor, ReviewResult
 
@@ -122,3 +126,126 @@ async def create_session(
             detail=f"创建 session 失败: {e}",
         ) from e
     return {"session_id": sid, "book_id": book_id, "branch_name": branch_name}
+
+
+# ── daemon 控制（Track F · Week 3） ──────────────────────
+
+
+def _get_pool() -> DaemonPool:
+    """供 Depends 使用：返回进程内默认 DaemonPool。"""
+    return get_default_pool(session_factory=SessionLocal)
+
+
+class DaemonStartReq(BaseModel):
+    session_id: str
+    start_chapter: int
+    end_chapter: int
+    priority: int = 5
+    heartbeat_interval: float = 5.0
+
+
+@router.post(
+    "/books/{book_id}/daemon/start",
+    summary="启动 BookProductionDaemon",
+)
+async def start_daemon(
+    book_id: str,
+    body: DaemonStartReq,
+    pool: DaemonPool = Depends(_get_pool),
+) -> dict[str, Any]:
+    try:
+        daemon = await pool.spawn(
+            book_id=book_id,
+            session_id=body.session_id,
+            start_chapter=body.start_chapter,
+            end_chapter=body.end_chapter,
+            priority=body.priority,
+            heartbeat_interval=body.heartbeat_interval,
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    return daemon.status()
+
+
+@router.post(
+    "/books/{book_id}/daemon/pause",
+    summary="暂停 daemon",
+)
+async def pause_daemon(
+    book_id: str,
+    pool: DaemonPool = Depends(_get_pool),
+) -> dict[str, Any]:
+    try:
+        await pool.pause(book_id)
+    except KeyError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except RuntimeError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+    return pool.get(book_id).status()  # type: ignore[union-attr]
+
+
+@router.post(
+    "/books/{book_id}/daemon/resume",
+    summary="恢复 daemon",
+)
+async def resume_daemon(
+    book_id: str,
+    pool: DaemonPool = Depends(_get_pool),
+) -> dict[str, Any]:
+    try:
+        await pool.resume(book_id)
+    except KeyError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except RuntimeError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+    return pool.get(book_id).status()  # type: ignore[union-attr]
+
+
+@router.post(
+    "/books/{book_id}/daemon/stop",
+    summary="停止 daemon",
+)
+async def stop_daemon(
+    book_id: str,
+    wait: bool = Query(default=True),
+    timeout: float = Query(default=10.0, ge=0.1, le=60.0),
+    pool: DaemonPool = Depends(_get_pool),
+) -> dict[str, Any]:
+    try:
+        await pool.stop(book_id, wait=wait, timeout=timeout)
+    except KeyError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    daemon = pool.get(book_id)
+    return daemon.status() if daemon else {"book_id": book_id, "state": "stopped"}
+
+
+@router.get(
+    "/books/{book_id}/state",
+    summary="读取 BookState 行",
+)
+async def get_book_state(
+    book_id: str,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    row = db.query(BookState).filter_by(book_id=book_id).first()
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"BookState not found for {book_id}",
+        )
+    return row.to_dict()
+
+
+@router.get(
+    "/daemons",
+    summary="列出所有 daemon 当前状态",
+)
+async def list_daemons(
+    pool: DaemonPool = Depends(_get_pool),
+) -> dict[str, Any]:
+    return {
+        "stats": pool.stats(),
+        "daemons": pool.list_states(),
+    }
