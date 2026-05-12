@@ -20,12 +20,14 @@
 | Claude | 任务 | 分支 | 状态 | PR | 完成时间 | 备注 |
 |---|---|---|---|---|---|---|
 | **A** | editor_mode + hard_rules + 审稿 API | `feat/track-f/week1-editor-mode` | 🟢 merged | `bd08c28` | 2026-05-12 | Cascade 接手完成。63/63 测试通过 |
-| **B** | event_store + Event/Session 表 + 迁移 | `feat/track-f/week2-event-store` | � merged | `6ba3d83` | 2026-05-12 | Cascade 接手完成。22/22 测试 + alembic 三连过 |
+| **B** | event_store + Event/Session 表 + 迁移 | `feat/track-f/week2-event-store` | 🟢 merged | `6ba3d83` | 2026-05-12 | Cascade 接手完成。22/22 测试 + alembic 三连过 |
 
-**Phase 1 验收标准**：
-- A 和 B 两个 PR 都已 review + merge 到 `main`
-- `curl POST /managed/books/{bid}/chapter/3/review` 能跑通
-- `curl GET /managed/books/{bid}/events?limit=10` 能返回事件
+**Phase 1 验收标准（全部 ✅）**：
+- ✅ A 和 B 两个 PR 都已 review + merge 到 `main` (commit `bec4415`)
+- ✅ `POST /api/v1/managed/books/{bid}/chapter/{n}/review` 跑通（支持可选 `session_id` 自动写事件）
+- ✅ `GET /api/v1/managed/books/{bid}/events?session_id=…&limit=…&types=…` 跑通
+- ✅ `POST /api/v1/managed/books/{bid}/sessions` 创建 session
+- ✅ 91/91 联合测试全过（hard_rules 35 + managed_editor 28 + event_store 22 + e2e 6）
 
 ---
 
