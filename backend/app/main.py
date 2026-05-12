@@ -50,6 +50,7 @@ from app.api.memory import router as memory_router  # noqa: E402
 from app.api.inspiration import router as inspiration_router  # noqa: E402
 from app.api.knowledge import router as knowledge_router  # noqa: E402
 from app.api.event_engine import router as event_engine_router  # noqa: E402
+from app.api.managed import router as managed_router  # noqa: E402  # Track F · Week 1
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("novelforge")
@@ -163,6 +164,7 @@ app.include_router(memory_router, prefix="/api/v1")
 app.include_router(inspiration_router, prefix="/api/v1")
 app.include_router(knowledge_router, prefix="/api/v1")
 app.include_router(event_engine_router, prefix="/api/v1")
+app.include_router(managed_router, prefix="/api/v1")  # Track F · Week 1
 
 
 @app.get("/health")
