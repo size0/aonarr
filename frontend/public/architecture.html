@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovelForgeX 系统架构全景图</title>
+    <style>
+        :root { --bg-panel: rgba(12,18,38,.84); --bg-panel2: rgba(18,26,52,.78); --border: rgba(125,211,252,.22); --text:#e8edf7; --muted:#94a3b8; --accent:#7dd3fc; --accent2:#a78bfa; --warn:#fcd34d; --green:#6ee7b7; }
+        *{margin:0;padding:0;box-sizing:border-box} html{scroll-behavior:smooth}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:var(--text);line-height:1.48;font-size:13px;min-height:100vh;padding:10px 12px 20px;background:radial-gradient(ellipse 120% 80% at 50% -20%,rgba(56,189,248,.12),transparent 55%),radial-gradient(ellipse 80% 50% at 100% 50%,rgba(167,139,250,.08),transparent 50%),linear-gradient(165deg,#030712 0%,#0b1020 40%,#060a14 100%)}
+        .starfield{pointer-events:none;position:fixed;inset:0;z-index:0;background-image:radial-gradient(1px 1px at 10% 20%,rgba(255,255,255,.85) 50%,transparent 51%),radial-gradient(1px 1px at 30% 65%,rgba(255,255,255,.5) 50%,transparent 51%),radial-gradient(1px 1px at 72% 18%,rgba(255,255,255,.7) 50%,transparent 51%),radial-gradient(1.5px 1.5px at 45% 35%,rgba(125,211,252,.9) 50%,transparent 51%);opacity:.65}
+        .page-wrap{position:relative;z-index:1}.container{max-width:1480px;margin:0 auto;background:var(--bg-panel);border-radius:14px;border:1px solid var(--border);box-shadow:0 0 0 1px rgba(0,0,0,.35),0 24px 80px rgba(0,0,0,.45);overflow:hidden;backdrop-filter:blur(12px)}
+        header{background:linear-gradient(125deg,rgba(99,102,241,.25),rgba(168,85,247,.2),rgba(14,165,233,.18));border-bottom:1px solid var(--border);padding:20px 24px 22px;text-align:center} header h1{font-size:1.78rem;margin-bottom:8px;text-shadow:0 0 40px rgba(125,211,252,.35)} header p{color:var(--muted);max-width:920px;margin:0 auto 6px}
+        nav{background:rgba(6,10,24,.68);padding:8px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)} nav ul{list-style:none;display:flex;gap:6px 10px;flex-wrap:wrap;justify-content:center} nav a{color:var(--accent);text-decoration:none;font-weight:700;font-size:.78rem;padding:5px 10px;border-radius:999px;border:1px solid transparent} nav a:hover{background:rgba(125,211,252,.12);border-color:var(--border);color:#fff}
+        .content{padding:16px 18px 22px} section{margin-bottom:28px} h2{font-size:1.2rem;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);letter-spacing:.03em} h3{font-size:1.02rem;color:var(--accent2);margin:14px 0 8px} h4{font-size:.95rem;color:#cbd5e1;margin:10px 0 6px} p,li{color:var(--muted)} .lede{color:var(--muted);font-size:.84rem;margin-bottom:10px}
+        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:10px 0}.card{background:var(--bg-panel2);border-radius:8px;padding:10px 12px;border:1px solid var(--border);border-left:3px solid var(--accent)}.card.purple{border-left-color:var(--accent2)}.card.green{border-left-color:var(--green)}.card.warn{border-left-color:var(--warn)}.card h4{color:var(--accent);margin-top:0}.card.purple h4{color:var(--accent2)}.card.green h4{color:var(--green)}.card.warn h4{color:var(--warn)}.card p,.card li{font-size:.82rem}
+        code{background:rgba(0,0,0,.35);padding:1px 5px;border-radius:4px;font-family:ui-monospace,Consolas,monospace;font-size:.8em;color:var(--warn)} pre{background:#0a0f1c;color:#e2e8f0;padding:10px 12px;border-radius:8px;overflow-x:auto;margin:8px 0;font-size:.75rem;border:1px solid var(--border)}
+        .badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.68rem;font-weight:800;margin-right:4px;margin-bottom:2px;font-family:ui-monospace,Consolas,monospace}.badge-get{background:rgba(52,211,153,.2);color:#6ee7b7;border:1px solid rgba(52,211,153,.35)}.badge-post{background:rgba(56,189,248,.18);color:#7dd3fc;border:1px solid rgba(56,189,248,.35)}.badge-put{background:rgba(251,191,36,.15);color:#fcd34d;border:1px solid rgba(251,191,36,.35)}.badge-patch{background:rgba(167,139,250,.18);color:#c4b5fd;border:1px solid rgba(167,139,250,.35)}.badge-delete{background:rgba(244,114,182,.15);color:#f9a8d4;border:1px solid rgba(244,114,182,.35)}.badge-sse{background:rgba(52,211,153,.12);color:#86efac;border:1px solid rgba(52,211,153,.25)}
+        .highlight{background:linear-gradient(90deg,rgba(251,191,36,.12),rgba(245,158,11,.06));padding:10px 12px;border-radius:8px;margin:10px 0;border:1px solid rgba(251,191,36,.25)}.highlight h4{color:var(--warn);margin-top:0}
+        table{width:100%;border-collapse:collapse;margin:8px 0 12px;background:rgba(0,0,0,.18);border-radius:8px;overflow:hidden;border:1px solid var(--border);font-size:.78rem} th,td{padding:7px 10px;text-align:left;border-bottom:1px solid rgba(125,211,252,.1);vertical-align:top} th{background:rgba(56,189,248,.12);color:var(--accent);font-size:.72rem;letter-spacing:.04em} td{color:var(--muted)} table.dense td,table.dense th{padding:4px 8px} table.dense code{font-size:.72rem}
+        ul.compact{margin:4px 0 0 1.1rem;color:var(--muted);font-size:.82rem} ul.compact li{margin:2px 0}.mono-path{font-family:ui-monospace,Consolas,monospace;font-size:.72rem;color:#a5b4fc}.diagram-wrap{margin:12px 0;padding:12px 14px;background:rgba(0,0,0,.28);border:1px solid var(--border);border-radius:10px;overflow-x:auto}.diagram-wrap .mermaid{display:flex;justify-content:center;min-height:80px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:900px){.two-col{grid-template-columns:1fr}}
+        footer{background:rgba(3,6,16,.9);color:var(--muted);text-align:center;padding:14px;font-size:.78rem;border-top:1px solid var(--border)}
+        .engine-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.7rem;font-weight:700;margin:0 3px 4px 0}
+        .eb-creation{background:rgba(99,102,241,.2);color:#a5b4fc;border:1px solid rgba(99,102,241,.35)}
+        .eb-analysis{background:rgba(52,211,153,.15);color:#6ee7b7;border:1px solid rgba(52,211,153,.3)}
+        .eb-world{background:rgba(251,191,36,.15);color:#fcd34d;border:1px solid rgba(251,191,36,.3)}
+        .eb-audit{background:rgba(244,114,182,.15);color:#f9a8d4;border:1px solid rgba(244,114,182,.3)}
+        .eb-data{background:rgba(56,189,248,.15);color:#7dd3fc;border:1px solid rgba(56,189,248,.3)}
+        .eb-learning{background:rgba(167,139,250,.15);color:#c4b5fd;border:1px solid rgba(167,139,250,.3)}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <div class="starfield"></div>
+    <div class="page-wrap"><div class="container">
+        <header>
+            <h1>NovelForgeX 系统架构全景图</h1>
+            <p>FastAPI + Vue 3 + SQLite + Naive UI 的全栈 AI 长篇小说创作引擎。本页记录 <strong>NovelForgeX 当前真实架构</strong>。</p>
+            <p>后端入口：<code>backend/app/main.py</code> · 数据库：<code>data/novelforge.db</code> (SQLite)</p>
+            <p>前端入口：<code>frontend/src/App.vue</code> · API 基础路径：<code>/api/v1</code></p>
+        </header>
+        <nav><ul>
+            <li><a href="#overview">1 产品全景</a></li>
+            <li><a href="#engines">2 六大引擎</a></li>
+            <li><a href="#layers">3 技术分层</a></li>
+            <li><a href="#data">4 数据模型</a></li>
+            <li><a href="#llm">5 LLM 体系</a></li>
+            <li><a href="#backend">6 后端路由</a></li>
+            <li><a href="#frontend">7 前端页面</a></li>
+            <li><a href="#workflow">8 创作工作流</a></li>
+            <li><a href="#scheduler">9 定时任务</a></li>
+            <li><a href="#api">10 API 速查</a></li>
+        </ul></nav>
+        <div class="content">
+
+            <!-- ═══ 1 产品全景 ═══ -->
+            <section id="overview">
+                <h2>1 产品全景</h2>
+                <p class="lede">NovelForgeX 围绕 <code>Novel</code> 展开，覆盖从创建、世界观/人物/大纲自动生成、逐章 beat-by-beat 续写、章后审计管线到数据采集、拆书学习、提示词优化的完整闭环。</p>
+                <div class="diagram-wrap"><div class="mermaid">
+flowchart LR
+    A[创建小说] --> B[Bootstrap]
+    B --> B1[世界观生成]
+    B --> B2[核心人物生成]
+    B --> B3[宏观大纲生成]
+    B3 --> C[大纲确认]
+    C --> D[逐章写作]
+    D --> D1[Beat 节拍规划]
+    D1 --> D2[Beat-by-Beat 流式续写]
+    D2 --> D3[章后管线]
+    D3 --> D4[质量审核]
+    D4 -->|通过| D5[保存章节]
+    D4 -->|不通过| D2
+    D5 --> D[下一章]
+    D5 --> E[数据看板]
+    D5 --> F[发布中心]
+    F --> G[番茄/起点]
+                </div></div>
+                <div class="grid">
+                    <div class="card"><h4>Novel</h4><p>作品根资源，包含标题、题材、标签、简介、目标章数、每章字数。</p></div>
+                    <div class="card"><h4>Bootstrap</h4><p>创建后 SSE 流式生成世界观 → 人物 → 大纲，前端实时展示并确认。</p></div>
+                    <div class="card purple"><h4>Beat-by-Beat</h4><p>章节按节拍 (beat) 逐段生成，每个 beat 流式输出到 Tiptap 编辑器。</p></div>
+                    <div class="card green"><h4>章后管线</h4><p>续写完成后自动执行一致性检查、质量雷达、风格漂移检测。</p></div>
+                    <div class="card warn"><h4>学习闭环</h4><p>每日热门采集 → 每周拆书学习 → 每周提示词优化。</p></div>
+                </div>
+            </section>
+
+            <!-- ═══ 2 六大引擎 ═══ -->
+            <section id="engines">
+                <h2>2 六大引擎</h2>
+                <p class="lede">系统按职责划分为六大引擎，各引擎独立演进，通过 <code>Novel</code> 模型和 <code>StageModelResolver</code> 连接。</p>
+                <div class="grid">
+                    <div class="card"><h4><span class="engine-badge eb-creation">创作引擎</span></h4>
+                        <ul class="compact">
+                            <li><code>NovelBootstrapper</code> — 新书初始化 (世界观/人物/大纲)</li>
+                            <li><code>ChapterWriter</code> — beat-by-beat 流式章节生成</li>
+                            <li><code>ContextBuilder</code> — 上下文窗口构建</li>
+                            <li><code>OutlineGenerator</code> — 宏观大纲与节拍规划</li>
+                            <li><code>PostPipeline</code> — 章后自动管线</li>
+                            <li><code>AutopilotDaemon</code> — 全托管自动写作</li>
+                            <li><code>VectorStore</code> — 向量检索增强</li>
+                        </ul>
+                    </div>
+                    <div class="card purple"><h4><span class="engine-badge eb-analysis">拆书引擎</span></h4>
+                        <ul class="compact">
+                            <li><code>BookImporter</code> — 多格式导入 (TXT/EPUB)</li>
+                            <li><code>ChapterSplitter</code> — 智能章节切分</li>
+                            <li><code>EntityScanner</code> — 实体扫描提取</li>
+                            <li><code>ChapterExtractor</code> — 深度章节分析</li>
+                            <li><code>Aggregator</code> — 多章聚合报告</li>
+                            <li><code>StyleFingerprint</code> — 文风指纹提取</li>
+                        </ul>
+                    </div>
+                    <div class="card warn"><h4><span class="engine-badge eb-world">世界引擎</span></h4>
+                        <ul class="compact">
+                            <li><code>WorldItem</code> — 世界条目 CRUD (地点/势力/物品/规则/历史)</li>
+                            <li><code>Character</code> — 角色管理 (主角/反派/配角/导师/恋人)</li>
+                            <li><code>OutlineNode</code> — 大纲树 (卷/幕/章/场景/节拍)</li>
+                            <li>伏笔追踪（沉淀在章后管线）</li>
+                        </ul>
+                    </div>
+                    <div class="card green"><h4><span class="engine-badge eb-audit">审核引擎</span></h4>
+                        <ul class="compact">
+                            <li><code>QualityRadar</code> — 多维质量雷达图</li>
+                            <li><code>ConsistencyChecker</code> — 前后文一致性检查</li>
+                            <li><code>StyleDriftDetector</code> — 文风漂移检测</li>
+                        </ul>
+                    </div>
+                    <div class="card"><h4><span class="engine-badge eb-data">数据引擎</span></h4>
+                        <ul class="compact">
+                            <li><code>DataCollector</code> — 番茄小说数据采集</li>
+                            <li><code>FanqieStats</code> — 阅读/收藏/评分实时统计</li>
+                            <li><code>ReadPredictor</code> — AI 阅读量预测</li>
+                        </ul>
+                    </div>
+                    <div class="card purple"><h4><span class="engine-badge eb-learning">学习引擎</span></h4>
+                        <ul class="compact">
+                            <li><code>HotCrawler</code> — 多平台热门小说采集</li>
+                            <li><code>KnowledgeExtractor</code> — 拆书知识提取</li>
+                            <li><code>PromptOptimizer</code> — 提示词自动优化</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ 3 技术分层 ═══ -->
+            <section id="layers">
+                <h2>3 技术分层</h2>
+                <div class="diagram-wrap"><div class="mermaid">
+flowchart TB
+    UI["Vue 3 Pages + Naive UI"] --> API["Pinia Stores + API Client (Axios)"]
+    API --> R["FastAPI Routers (/api/v1)"]
+    R --> SVC["Service Layer (六大引擎)"]
+    SVC --> ORM["SQLAlchemy ORM Models"]
+    SVC --> LLM["LLM Client (OpenAI/Anthropic/Gemini)"]
+    SVC --> SCHED["APScheduler 定时任务"]
+    ORM --> DB["SQLite (novelforge.db)"]
+    LLM --> PROXY["API Proxy (Sub2API)"]
+                </div></div>
+                <table><thead><tr><th>层级</th><th>关键文件</th><th>职责</th></tr></thead><tbody>
+                    <tr><td>前端入口</td><td><code>frontend/src/App.vue</code></td><td>Naive UI 全局 Provider、Vue Router 页面路由。</td></tr>
+                    <tr><td>页面组件 (11个)</td><td><code>DashboardPage</code>、<code>StudioPage</code>、<code>OutlinePage</code>、<code>WorldViewPage</code>、<code>BookLabPage</code>、<code>PublishPage</code>、<code>DataBoardPage</code>、<code>PredictPage</code>、<code>LearnHubPage</code>、<code>PromptsPage</code>、<code>SettingsPage</code></td><td>各功能模块 UI 页面。</td></tr>
+                    <tr><td>状态管理</td><td><code>stores/novels.ts</code>、<code>creation.ts</code>、<code>outline.ts</code>、<code>llmSettings.ts</code></td><td>Pinia Store，管理小说、创作、大纲、LLM 配置状态。</td></tr>
+                    <tr><td>API 客户端 (10个)</td><td><code>api/client.ts</code>、<code>novels.ts</code>、<code>creation.ts</code>、<code>outline.ts</code>、<code>analysis.ts</code>、<code>publishing.ts</code>、<code>data.ts</code>、<code>learning.ts</code>、<code>llmSettings.ts</code>、<code>prompts.ts</code></td><td>Axios 封装，类型安全的 API 调用。</td></tr>
+                    <tr><td>后端入口</td><td><code>backend/app/main.py</code></td><td>FastAPI 应用、CORS、Lifespan、Router 注册。</td></tr>
+                    <tr><td>API 路由 (13个)</td><td><code>novels</code>、<code>characters</code>、<code>outline</code>、<code>world</code>、<code>creation</code>、<code>analysis</code>、<code>audit</code>、<code>publishing</code>、<code>data_collect</code>、<code>prediction</code>、<code>learning</code>、<code>llm_settings</code>、<code>prompts</code></td><td>RESTful + SSE 端点。</td></tr>
+                    <tr><td>服务层 (6个域)</td><td><code>services/creation/</code>、<code>services/analysis/</code>、<code>services/audit/</code>、<code>services/data/</code>、<code>services/learning/</code>、<code>services/publishing/</code></td><td>业务逻辑、LLM 调用、数据处理。</td></tr>
+                    <tr><td>LLM 层</td><td><code>llm/client.py</code>、<code>profiles.py</code>、<code>resolver.py</code>、<code>presets.py</code></td><td>统一 LLM 客户端 (三协议)、阶段绑定、双预设、自动重试。</td></tr>
+                    <tr><td>数据层</td><td><code>db/connection.py</code>、<code>models/*.py</code>、<code>schemas/*.py</code></td><td>SQLAlchemy ORM 模型 + Pydantic DTO。</td></tr>
+                    <tr><td>调度器</td><td><code>scheduler.py</code></td><td>APScheduler 管理定时采集、学习、优化任务。</td></tr>
+                </tbody></table>
+            </section>
+
+            <!-- ═══ 4 数据模型 ═══ -->
+            <section id="data">
+                <h2>4 数据模型</h2>
+                <p class="lede">持久化使用 SQLite + SQLAlchemy ORM，所有表由 <code>init_db()</code> 在启动时自动创建。</p>
+                <div class="diagram-wrap"><div class="mermaid">
+erDiagram
+    Novel ||--o{ Chapter : has
+    Novel ||--o{ Character : has
+    Novel ||--o{ WorldItem : has
+    Novel ||--o{ OutlineNode : has
+    Novel {
+        string id PK
+        string title
+        string genre
+        string tags
+        string synopsis
+        int target_chapter_count
+        int words_per_chapter
+        int target_word_count
+        int current_word_count
+        string status
+    }
+    Chapter {
+        string id PK
+        string novel_id FK
+        int number
+        string title
+        text content
+        int word_count
+        string status
+        float tension_score
+    }
+    Character {
+        string id PK
+        string novel_id FK
+        string name
+        string role
+        text description
+        text traits
+    }
+    WorldItem {
+        string id PK
+        string novel_id FK
+        string category
+        string name
+        text description
+    }
+    OutlineNode {
+        string id PK
+        string novel_id FK
+        string parent_id FK
+        string level
+        string title
+        text summary
+        int sort_order
+    }
+                </div></div>
+                <table class="dense"><thead><tr><th>表</th><th>内容</th><th>主要写入方</th></tr></thead><tbody>
+                    <tr><td><code>novels</code></td><td>作品根记录：标题、题材、标签、简介、目标章数、每章字数、状态。</td><td>Novels API / Bootstrap</td></tr>
+                    <tr><td><code>chapters</code></td><td>章节内容、摘要、字数、张力分数、生成模型。级联删除。</td><td>ChapterWriter / Studio</td></tr>
+                    <tr><td><code>characters</code></td><td>角色设定：名称、角色类型、描述、性格特质。级联删除。</td><td>Bootstrap / Characters API</td></tr>
+                    <tr><td><code>world_items</code></td><td>世界观条目：地点/势力/物品/规则/历史。级联删除。</td><td>Bootstrap / World API</td></tr>
+                    <tr><td><code>outline_nodes</code></td><td>大纲树：卷/幕/章/场景/节拍，父子关系。级联删除。</td><td>Bootstrap / Outline API</td></tr>
+                    <tr><td><code>llm_profiles</code></td><td>LLM 供应商配置：协议、base_url、model、温度、超时。</td><td>LLM Settings API</td></tr>
+                    <tr><td><code>stage_bindings</code></td><td>阶段→Profile 绑定，支持 practical/flagship/custom 预设。</td><td>LLM Settings API</td></tr>
+                    <tr><td><code>prompt_templates</code></td><td>可编辑提示词模板，45 个活跃模板覆盖 11 个阶段。</td><td>Prompts API / seed_prompts</td></tr>
+                    <tr><td><code>analysis_jobs</code></td><td>拆书分析任务及结果。</td><td>Analysis API</td></tr>
+                    <tr><td><code>hot_novel_meta</code></td><td>热门小说元数据。</td><td>HotCrawler</td></tr>
+                    <tr><td><code>knowledge_entries</code></td><td>拆书提取的知识条目。</td><td>KnowledgeExtractor</td></tr>
+                    <tr><td><code>platform_stats</code></td><td>番茄/起点平台数据统计。</td><td>DataCollector</td></tr>
+                    <tr><td><code>publish_tasks</code></td><td>发布任务和调度配置。</td><td>Publishing API</td></tr>
+                </tbody></table>
+            </section>
+
+            <!-- ═══ 5 LLM 体系 ═══ -->
+            <section id="llm">
+                <h2>5 LLM 体系</h2>
+                <p class="lede"><code>StageModelResolver</code> 按阶段解析 LLM Profile，零自动判断。内置 practical / flagship 双预设，支持自定义覆盖。</p>
+                <div class="diagram-wrap"><div class="mermaid">
+flowchart LR
+    S[业务代码] -->|"get_llm_for_stage('chapter_writing')"| R[StageModelResolver]
+    R --> B[StageBindingRow]
+    B --> P[LLMProfileRow]
+    P --> C[LLMClient]
+    C -->|OpenAI 协议| API1[Sub2API / OpenAI]
+    C -->|Anthropic 协议| API2[Claude API]
+    C -->|Gemini 协议| API3[Google AI]
+    C -->|429/5xx| RETRY[指数退避重试 x4]
+    RETRY --> C
+                </div></div>
+                <h3>11 个阶段</h3>
+                <table class="dense"><thead><tr><th>阶段常量</th><th>用途</th><th>当前绑定模型</th></tr></thead><tbody>
+                    <tr><td><code>chapter_writing</code></td><td>章节续写</td><td>Claude Opus 4.6 Thinking (temp=0.78)</td></tr>
+                    <tr><td><code>outline_planning</code></td><td>大纲规划 / Bootstrap</td><td>Gemini 3.1 Pro High (temp=0.7)</td></tr>
+                    <tr><td><code>post_chapter_pipeline</code></td><td>章后管线</td><td>Gemini 2.5 Flash (temp=0.3)</td></tr>
+                    <tr><td><code>book_analysis_extract</code></td><td>拆书提取</td><td>Gemini 2.5 Flash (temp=0.3)</td></tr>
+                    <tr><td><code>book_analysis_deep</code></td><td>深度分析</td><td>Gemini 3.1 Pro High (temp=0.7)</td></tr>
+                    <tr><td><code>style_detection</code></td><td>文风检测</td><td>Claude Opus 4.7 Medium (temp=0.6)</td></tr>
+                    <tr><td><code>audit_review</code></td><td>审核审阅</td><td>Gemini 3.1 Pro High (temp=0.7)</td></tr>
+                    <tr><td><code>learning_agent</code></td><td>学习代理</td><td>Gemini 2.5 Flash (temp=0.3)</td></tr>
+                    <tr><td><code>prompt_optimization</code></td><td>提示词优化</td><td>Claude Opus 4.7 Medium (temp=0.6)</td></tr>
+                    <tr><td><code>prediction</code></td><td>数据预测</td><td>Gemini 3.1 Pro High (temp=0.7)</td></tr>
+                    <tr><td><code>embedding</code></td><td>向量嵌入</td><td>(待配置)</td></tr>
+                </tbody></table>
+                <div class="highlight"><h4>LLMClient 自动重试</h4><p>遇到 429 / 500 / 502 / 503 / 504 自动指数退避重试，最多 4 次 (8s → 16s → 32s → 64s)。Bootstrap 阶段间额外间隔 5 秒避免限流。API 端点：<code>http://120.48.178.14:3003/v1</code></p></div>
+            </section>
+
+            <!-- ═══ 6 后端路由 ═══ -->
+            <section id="backend">
+                <h2>6 后端路由</h2>
+                <p class="lede"><code>main.py</code> 将 13 个 Router 统一挂载到 <code>/api/v1</code>。</p>
+                <table><thead><tr><th>Router</th><th>Prefix</th><th>文件</th><th>职责</th></tr></thead><tbody>
+                    <tr><td>Novels</td><td><code>/novels</code></td><td><code>api/novels.py</code></td><td>小说 CRUD、章节 CRUD。</td></tr>
+                    <tr><td>Characters</td><td><code>/novels/{id}/characters</code></td><td><code>api/characters.py</code></td><td>角色 CRUD。</td></tr>
+                    <tr><td>Outline</td><td><code>/novels/{id}/outline</code></td><td><code>api/outline.py</code></td><td>大纲树 CRUD、节点重排序。</td></tr>
+                    <tr><td>World</td><td><code>/novels/{id}/world</code></td><td><code>api/world.py</code></td><td>世界观条目 CRUD。</td></tr>
+                    <tr><td>Creation</td><td><code>/creation</code></td><td><code>api/creation.py</code></td><td>大纲生成、SSE 章节流式续写、Bootstrap、全托管。</td></tr>
+                    <tr><td>Analysis</td><td><code>/analysis</code></td><td><code>api/analysis.py</code></td><td>拆书分析任务管理。</td></tr>
+                    <tr><td>Audit</td><td><code>/audit</code></td><td><code>api/audit.py</code></td><td>质量雷达、一致性、风格漂移检查。</td></tr>
+                    <tr><td>Publishing</td><td><code>/publishing</code></td><td><code>api/publishing.py</code></td><td>番茄/起点发布、Cookie 管理、调度发布。</td></tr>
+                    <tr><td>Data</td><td><code>/data</code></td><td><code>api/data_collect.py</code></td><td>番茄数据采集、平台统计、Cookie 导入。</td></tr>
+                    <tr><td>Prediction</td><td><code>/prediction</code></td><td><code>api/prediction.py</code></td><td>AI 阅读量/收藏预测。</td></tr>
+                    <tr><td>Learning</td><td><code>/learning</code></td><td><code>api/learning.py</code></td><td>热门采集、知识库、拆书学习。</td></tr>
+                    <tr><td>LLM Settings</td><td><code>/settings/llm</code></td><td><code>api/llm_settings.py</code></td><td>Profile CRUD、阶段绑定、预设切换。</td></tr>
+                    <tr><td>Prompts</td><td><code>/prompts</code></td><td><code>api/prompts.py</code></td><td>提示词模板列表、编辑、重置。</td></tr>
+                </tbody></table>
+            </section>
+
+            <!-- ═══ 7 前端页面 ═══ -->
+            <section id="frontend">
+                <h2>7 前端页面</h2>
+                <p class="lede">Vue 3 + TypeScript + Naive UI + Pinia + Tiptap 编辑器。侧边栏导航，Modern SaaS Dashboard 设计风格。</p>
+                <div class="grid">
+                    <div class="card"><h4>DashboardPage</h4><p>仪表盘首页。统计概览、目标进度、快捷入口、最近作品、新建/删除小说、Bootstrap 初始化面板。</p></div>
+                    <div class="card purple"><h4>StudioPage</h4><p>沉浸式创作台。Tiptap 富文本编辑器、SSE 流式续写、章节列表管理、beat-by-beat 生成。</p></div>
+                    <div class="card"><h4>OutlinePage</h4><p>大纲管理。卷/章树形结构、拖拽排序、AI 生成节拍。</p></div>
+                    <div class="card green"><h4>WorldViewPage</h4><p>世界观设定。角色图谱、世界地图、百科浏览器、世界条目管理。</p></div>
+                    <div class="card warn"><h4>BookLabPage</h4><p>拆书实验室。导入作品、多维分析、文风指纹、学习笔记。</p></div>
+                    <div class="card purple"><h4>PublishPage</h4><p>发布中心。番茄/起点对接、定时发布、发布记录。</p></div>
+                    <div class="card"><h4>DataBoardPage</h4><p>数据看板。番茄实时数据、阅读/收藏/评分趋势、Cookie 管理。</p></div>
+                    <div class="card green"><h4>PredictPage</h4><p>数据预测。AI 预测阅读量、收藏量、收入、排名趋势。</p></div>
+                    <div class="card warn"><h4>LearnHubPage</h4><p>学习中心。热门小说排行、拆书知识库、AI 学习笔记。</p></div>
+                    <div class="card"><h4>PromptsPage</h4><p>提示词管理。45 个模板的查看、编辑、重置。</p></div>
+                    <div class="card purple"><h4>SettingsPage</h4><p>系统设置。LLM Profile 管理、阶段绑定、预设切换。</p></div>
+                </div>
+            </section>
+
+            <!-- ═══ 8 创作工作流 ═══ -->
+            <section id="workflow">
+                <h2>8 创作工作流</h2>
+                <h3>新书初始化 (Bootstrap)</h3>
+                <div class="diagram-wrap"><div class="mermaid">
+sequenceDiagram
+    participant U as 用户
+    participant FE as Dashboard
+    participant SSE as SSE Stream
+    participant BS as NovelBootstrapper
+    participant LLM as LLM API
+    participant DB as SQLite
+
+    U->>FE: 创建小说 (标题/题材/章数/字数)
+    FE->>DB: POST /novels → 保存
+    FE->>SSE: GET /creation/{id}/bootstrap
+    SSE->>BS: 启动流式初始化
+
+    BS->>LLM: 生成世界观
+    BS->>DB: 保存 WorldItems
+    BS-->>SSE: world done + data
+    Note over BS: sleep 5s
+
+    BS->>LLM: 生成核心人物
+    BS->>DB: 保存 Characters
+    BS-->>SSE: characters done + data
+    Note over BS: sleep 5s
+
+    BS->>LLM: 生成宏观大纲
+    BS->>DB: 保存 OutlineNodes
+    BS-->>SSE: outline done + data
+    BS-->>SSE: complete
+
+    SSE-->>FE: 展示结果面板
+    U->>FE: 确认 → 进入创作台
+                </div></div>
+                <h3>逐章续写 (Beat-by-Beat)</h3>
+                <div class="diagram-wrap"><div class="mermaid">
+sequenceDiagram
+    participant U as 用户
+    participant ST as StudioPage
+    participant CW as ChapterWriter
+    participant CB as ContextBuilder
+    participant LLM as LLM API
+
+    U->>ST: 点击续写第 N 章
+    ST->>CW: SSE /creation/{id}/stream?chapter=N
+    CW->>CB: build(novel_id, chapter_number)
+    CB-->>CW: 上下文 (前文摘要/角色/大纲/节拍)
+
+    loop 每个 Beat
+        CW-->>ST: beat_start (摘要)
+        CW->>LLM: 生成 beat 内容 (流式)
+        loop 流式 chunks
+            LLM-->>CW: text chunk
+            CW-->>ST: chapter_chunk → Tiptap 插入
+        end
+        CW-->>ST: beat_done (字数)
+    end
+
+    CW->>CW: 保存章节到 DB
+    CW-->>ST: chapter_saved
+                </div></div>
+                <div class="grid">
+                    <div class="card"><h4>ContextBuilder</h4><p>为章节生成构建上下文窗口：前 N 章摘要、角色状态、世界设定、当前章节大纲节拍。上下文输入 LLM 的 system prompt。</p></div>
+                    <div class="card purple"><h4>PostPipeline</h4><p>章节完成后自动执行：摘要生成、字数统计、角色追踪更新、伏笔检查。由 <code>post_chapter_pipeline</code> 阶段 LLM 驱动。</p></div>
+                    <div class="card green"><h4>PromptLoader</h4><p>从 DB <code>prompt_templates</code> 表加载提示词模板，支持变量替换。模板不存在时使用硬编码 fallback。</p></div>
+                    <div class="card warn"><h4>AutopilotDaemon</h4><p>全托管模式：自动规划节拍 → 逐章续写 → 章后管线 → 循环下一章。可暂停/恢复。</p></div>
+                </div>
+            </section>
+
+            <!-- ═══ 9 定时任务 ═══ -->
+            <section id="scheduler">
+                <h2>9 定时任务</h2>
+                <p class="lede">APScheduler (AsyncIOScheduler) 管理所有定时任务，在 <code>lifespan</code> 中启动。</p>
+                <table><thead><tr><th>Job ID</th><th>触发时间</th><th>执行内容</th><th>服务</th></tr></thead><tbody>
+                    <tr><td><code>daily_data_collect</code></td><td>每天 06:00</td><td>番茄小说平台数据采集</td><td><code>DataCollector.collect_all_scheduled()</code></td></tr>
+                    <tr><td><code>daily_hot_crawl</code></td><td>每天 08:00</td><td>多平台热门小说爬取</td><td><code>crawl_all_platforms()</code></td></tr>
+                    <tr><td><code>weekly_learn</code></td><td>每周一 03:00</td><td>拆书知识提取 (最近 10 本)</td><td><code>extract_knowledge_from_recent()</code></td></tr>
+                    <tr><td><code>weekly_prompt_opt</code></td><td>每周日 04:00</td><td>提示词自动优化</td><td><code>optimize_prompts()</code></td></tr>
+                </tbody></table>
+            </section>
+
+            <!-- ═══ 10 API 速查 (synced with /openapi.json 2026-05-05) ═══ -->
+            <section id="api">
+                <h2>10 API 速查</h2>
+
+                <h3>Health</h3>
+                <p><span class="badge badge-get">GET</span><code>/health</code></p>
+
+                <h3>Novels</h3>
+                <p>
+                    <span class="badge badge-get">GET</span><code>/api/v1/novels/</code> — 列表
+                    <span class="badge badge-post">POST</span><code>/api/v1/novels/</code> — 新建
+                    <span class="badge badge-get">GET</span><code>/api/v1/novels/{novel_id}</code> — 详情
+                    <span class="badge badge-patch">PATCH</span><code>/api/v1/novels/{novel_id}</code> — 更新
+                    <span class="badge badge-delete">DELETE</span><code>/api/v1/novels/{novel_id}</code> — 删除
+                </p>
+
+                <h3>Chapters</h3>
+                <p>
+                    <span class="badge badge-get">GET</span><code>/api/v1/novels/{novel_id}/chapters</code> — 列表
+                    <span class="badge badge-post">POST</span><code>/api/v1/novels/{novel_id}/chapters</code> — 新建
+                </p>
+
+                <h3>Characters</h3>
+                <p>
+                    <span class="badge badge-get">GET</span><code>/api/v1/novels/{novel_id}/characters</code> — 列表
+                    <span class="badge badge-post">POST</span><code>/api/v1/novels/{novel_id}/characters</code> — 新建
+                    <span class="badge badge-get">GET</span><code>/api/v1/novels/{novel_id}/characters/{character_id}</code> — 详情
+                    <span class="badge badge-patch">PATCH</span><code>/api/v1/novels/{novel_id}/characters/{character_id}</code> — 更新
+                    <span class="badge badge-delete">DELETE</span><code>/api/v1/novels/{novel_id}/characters/{character_id}</code> — 删除
+                </p>
+
+                <h3>Outline</h3>
+                <p>
+                    <span class="badge badge-get">GET</span><code>/api/v1/novels/{novel_id}/outline</code> — 获取大纲树
+                    <span class="badge badge-post">POST</span><code>/api/v1/novels/{novel_id}/outline</code> — 新建节点
+                    <span class="badge badge-post">POST</span><code>/api/v1/novels/{novel_id}/outline/reorder</code> — 排序
+                    <span class="badge badge-patch">PATCH</span><code>/api/v1/novels/{novel_id}/outline/{node_id}</code> — 更新节点
+                    <span class="badge badge-delete">DELETE</span><code>/api/v1/novels/{novel_id}/outline/{node_id}</code> — 删除节点
+                </p>
+
+                <h3>World</h3>
+                <p>
+                    <span class="badge badge-get">GET</span><code>/api/v1/novels/{novel_id}/world</code> — 列表
+                    <span class="badge badge-post">POST</span><code>/api/v1/novels/{novel_id}/world</code> — 新建
+                    <span class="badge badge-get">GET</span><code>/api/v1/novels/{novel_id}/world/{item_id}</code> — 详情
+                    <span class="badge badge-patch">PATCH</span><code>/api/v1/novels/{novel_id}/world/{item_id}</code> — 更新
+                    <span class="badge badge-delete">DELETE</span><code>/api/v1/novels/{novel_id}/world/{item_id}</code> — 删除
+                </p>
+
+                <h3>Creation</h3>
+                <p>
+                    <span class="badge badge-post">POST</span><code>/api/v1/creation/{novel_id}/outline</code> — AI 生成大纲
+                    <span class="badge badge-post">POST</span><code>/api/v1/creation/{novel_id}/chapter/{number}/beats</code> — 生成节拍
+                    <span class="badge badge-post">POST</span><code>/api/v1/creation/{novel_id}/chapter/{number}/generate</code> — 生成章节
+                    <span class="badge badge-post">POST</span><code>/api/v1/creation/{novel_id}/chapter/{number}/post-pipeline</code> — 章后管线
+                    <span class="badge badge-sse">SSE</span><code>/api/v1/creation/{novel_id}/chapter/{number}/stream</code> — 流式续写
+                    <span class="badge badge-sse">SSE</span><code>/api/v1/creation/{novel_id}/bootstrap</code> — 全量引导 (SSE)
+                    <span class="badge badge-post">POST</span><code>/api/v1/creation/{novel_id}/autopilot/start</code> — 启动自动驾驶
+                    <span class="badge badge-post">POST</span><code>/api/v1/creation/{novel_id}/autopilot/stop</code> — 停止
+                    <span class="badge badge-post">POST</span><code>/api/v1/creation/{novel_id}/autopilot/pause</code> — 暂停
+                    <span class="badge badge-post">POST</span><code>/api/v1/creation/{novel_id}/autopilot/resume</code> — 恢复
+                    <span class="badge badge-get">GET</span><code>/api/v1/creation/{novel_id}/autopilot/status</code> — 状态
+                </p>
+
+                <h3>Analysis (拆书)</h3>
+                <p>
+                    <span class="badge badge-post">POST</span><code>/api/v1/analysis/upload</code> — 上传并分析
+                    <span class="badge badge-get">GET</span><code>/api/v1/analysis/jobs</code> — 任务列表
+                    <span class="badge badge-get">GET</span><code>/api/v1/analysis/jobs/{job_id}</code> — 任务详情
+                    <span class="badge badge-delete">DELETE</span><code>/api/v1/analysis/jobs/{job_id}</code> — 删除任务
+                    <span class="badge badge-get">GET</span><code>/api/v1/analysis/jobs/{job_id}/chapters</code> — 章节列表
+                </p>
+
+                <h3>Audit (审核)</h3>
+                <p>
+                    <span class="badge badge-post">POST</span><code>/api/v1/audit/{novel_id}/chapters/{number}/quality</code> — 质量雷达
+                    <span class="badge badge-post">POST</span><code>/api/v1/audit/{novel_id}/chapters/{number}/style-drift</code> — 风格偏移
+                    <span class="badge badge-post">POST</span><code>/api/v1/audit/{novel_id}/consistency</code> — 一致性检查
+                    <span class="badge badge-post">POST</span><code>/api/v1/audit/{novel_id}/style-drift-all</code> — 全章风格偏移
+                </p>
+
+                <h3>Publishing</h3>
+                <p>
+                    <span class="badge badge-get">GET</span><code>/api/v1/publishing/platforms</code> — 平台列表
+                    <span class="badge badge-get">GET</span><code>/api/v1/publishing/platforms/{platform}/login-status</code> — 登录状态
+                    <span class="badge badge-post">POST</span><code>/api/v1/publishing/platforms/{platform}/capture-login</code> — 捕获登录
+                    <span class="badge badge-delete">DELETE</span><code>/api/v1/publishing/platforms/{platform}/login</code> — 清除登录
+                    <span class="badge badge-post">POST</span><code>/api/v1/publishing/schedule</code> — 排期发布
+                    <span class="badge badge-get">GET</span><code>/api/v1/publishing/jobs</code> — 任务列表
+                    <span class="badge badge-delete">DELETE</span><code>/api/v1/publishing/jobs/{job_id}</code> — 取消任务
+                    <span class="badge badge-post">POST</span><code>/api/v1/publishing/jobs/{job_id}/retry</code> — 重试任务
+                    <span class="badge badge-get">GET</span><code>/api/v1/publishing/scheduler/status</code> — 调度器状态
+                    <span class="badge badge-get">GET</span><code>/api/v1/publishing/stats/{novel_id}</code> — 平台统计
+                    <span class="badge badge-post">POST</span><code>/api/v1/publishing/stats/collect</code> — 触发采集
+                    <span class="badge badge-post">POST</span><code>/api/v1/publishing/stats/predict</code> — 预测阅读
+                </p>
+
+                <h3>Data (数据看板)</h3>
+                <p>
+                    <span class="badge badge-get">GET</span><code>/api/v1/data/overview</code> — 数据总览
+                    <span class="badge badge-get">GET</span><code>/api/v1/data/chapter-stats</code> — 章节统计
+                    <span class="badge badge-get">GET</span><code>/api/v1/data/novels-summary</code> — 作品摘要
+                    <span class="badge badge-get">GET</span><code>/api/v1/data/history</code> — 历史记录
+                    <span class="badge badge-get">GET</span><code>/api/v1/data/fanqie-books</code> — 番茄书单
+                    <span class="badge badge-get">GET</span><code>/api/v1/data/fanqie-book-stats/{book_id}</code> — 书籍实时统计
+                    <span class="badge badge-get">GET</span><code>/api/v1/data/cookie-status</code> — Cookie 状态
+                    <span class="badge badge-post">POST</span><code>/api/v1/data/import-cookies</code> — 导入 Cookie
+                    <span class="badge badge-post">POST</span><code>/api/v1/data/trigger-collect</code> — 触发采集
+                </p>
+
+                <h3>Prediction</h3>
+                <p>
+                    <span class="badge badge-post">POST</span><code>/api/v1/prediction/evaluate</code> — 作品评估
+                    <span class="badge badge-post">POST</span><code>/api/v1/prediction/read-trend</code> — 阅读趋势预测
+                </p>
+
+                <h3>Learning (学习中心)</h3>
+                <p>
+                    <span class="badge badge-get">GET</span><code>/api/v1/learning/stats</code> — 统计概览
+                    <span class="badge badge-get">GET</span><code>/api/v1/learning/hot-novels</code> — 热门小说列表
+                    <span class="badge badge-get">GET</span><code>/api/v1/learning/hot-novels/{novel_id}/chapters</code> — 章节列表
+                    <span class="badge badge-get">GET</span><code>/api/v1/learning/hot-novels/{novel_id}/chapters/{chapter_id}</code> — 章节内容
+                    <span class="badge badge-get">GET</span><code>/api/v1/learning/knowledge</code> — 知识条目列表
+                    <span class="badge badge-get">GET</span><code>/api/v1/learning/knowledge/{entry_id}</code> — 知识详情
+                    <span class="badge badge-delete">DELETE</span><code>/api/v1/learning/knowledge/{entry_id}</code> — 删除知识
+                    <span class="badge badge-get">GET</span><code>/api/v1/learning/optimization-logs</code> — 优化日志
+                    <span class="badge badge-post">POST</span><code>/api/v1/learning/optimization-logs/{log_id}/apply</code> — 应用优化
+                    <span class="badge badge-post">POST</span><code>/api/v1/learning/trigger-crawl</code> — 触发爬取
+                    <span class="badge badge-post">POST</span><code>/api/v1/learning/trigger-learn</code> — 触发学习
+                    <span class="badge badge-post">POST</span><code>/api/v1/learning/trigger-optimize</code> — 触发优化
+                </p>
+
+                <h3>LLM Settings</h3>
+                <p>
+                    <span class="badge badge-get">GET</span><code>/api/v1/settings/llm/config</code> — 完整配置
+                    <span class="badge badge-post">POST</span><code>/api/v1/settings/llm/profiles</code> — 新建 Profile
+                    <span class="badge badge-patch">PATCH</span><code>/api/v1/settings/llm/profiles/{profile_id}</code> — 更新
+                    <span class="badge badge-delete">DELETE</span><code>/api/v1/settings/llm/profiles/{profile_id}</code> — 删除
+                    <span class="badge badge-post">POST</span><code>/api/v1/settings/llm/profiles/{profile_id}/test</code> — 测试连接
+                    <span class="badge badge-post">POST</span><code>/api/v1/settings/llm/bind-stage</code> — 绑定阶段
+                    <span class="badge badge-post">POST</span><code>/api/v1/settings/llm/apply-preset</code> — 应用预设
+                    <span class="badge badge-get">GET</span><code>/api/v1/settings/llm/fetch-models</code> — 拉取远程模型列表
+                    <span class="badge badge-get">GET</span><code>/api/v1/settings/llm/fetch-models/{profile_id}</code> — 按 Profile 拉取
+                </p>
+
+                <h3>Prompts</h3>
+                <p>
+                    <span class="badge badge-get">GET</span><code>/api/v1/prompts</code> — 列表
+                    <span class="badge badge-post">POST</span><code>/api/v1/prompts</code> — 新建
+                    <span class="badge badge-get">GET</span><code>/api/v1/prompts/stages</code> — 阶段列表
+                    <span class="badge badge-get">GET</span><code>/api/v1/prompts/{prompt_id}</code> — 详情
+                    <span class="badge badge-patch">PATCH</span><code>/api/v1/prompts/{prompt_id}</code> — 更新
+                    <span class="badge badge-delete">DELETE</span><code>/api/v1/prompts/{prompt_id}</code> — 删除
+                    <span class="badge badge-post">POST</span><code>/api/v1/prompts/{prompt_id}/duplicate</code> — 复制
+                </p>
+            </section>
+
+        </div>
+        <footer>
+            <p>NovelForgeX 系统架构全景图 · 依据 <code>backend/app/main.py</code>、<code>models/*.py</code>、<code>frontend/src/App.vue</code> 和当前 routers 同步维护。</p>
+            <p style="margin-top:8px;">更新: 2026-05-05</p>
+        </footer>
+    </div></div>
+    <script>
+        mermaid.initialize({ startOnLoad:true, theme:'dark', themeVariables:{ primaryColor:'#1e293b', primaryTextColor:'#e8edf7', primaryBorderColor:'#38bdf8', lineColor:'#a78bfa', secondaryColor:'#0f172a', tertiaryColor:'#0b1020', mainBkg:'#0f172a', nodeBorder:'#7dd3fc', clusterBkg:'rgba(15,23,42,0.55)', titleColor:'#e8edf7', edgeLabelBackground:'#1e293b' }, flowchart:{ htmlLabels:true, curve:'basis', nodeSpacing:30, rankSpacing:45 }, sequence:{ actorMargin:24, boxMargin:8, messageFontSize:12 } });
+    </script>
+</body>
+</html>

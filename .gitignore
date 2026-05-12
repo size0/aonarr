@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Data
+/data/
+backend/data/
+*.db
+*.db-journal
+uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+
+# Logs
+*.log
+
+# IDE / Tooling caches
+.claude/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Local MCP / executables
+LocalShell-MCP/
+*.exe
+*.dll
+
+# Build artifacts
+*.tsbuildinfo

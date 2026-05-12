@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>墨语 · 长篇小说 — 工作台</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ========== Left Sidebar ========== -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">墨</div>
+    <span class="logo-text">墨语 · 长篇小说</span>
+    <span class="badge">专业版</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-item active"><span class="icon">📋</span>工作台</div>
+    <div class="nav-item"><span class="icon">📚</span>作品管理</div>
+    <div class="nav-item"><span class="icon">📖</span>章节管理</div>
+    <div class="nav-item"><span class="icon">🗂️</span>大纲管理</div>
+    <div class="nav-item"><span class="icon">👤</span>人物管理</div>
+    <div class="nav-item"><span class="icon">🌍</span>世界观设定</div>
+    <div class="nav-item"><span class="icon">📁</span>资料库</div>
+    <div class="nav-item"><span class="icon">💡</span>灵感笔记</div>
+    <div class="nav-item"><span class="icon">📊</span>写作统计</div>
+    <div class="nav-item"><span class="icon">📤</span>导出与发布</div>
+    <div class="nav-item"><span class="icon">👥</span>协作管理</div>
+    <div class="nav-item"><span class="icon">🤖</span>AI 助手</div>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div class="daily-goal">
+      <div class="goal-label">今日写作目标 <span class="edit-btn">编辑</span></div>
+      <div class="goal-value">2,000 <span>/ 2,000 字</span></div>
+      <div class="goal-status">✅ 已完成</div>
+    </div>
+  </div>
+
+  <div class="sidebar-user">
+    <div class="avatar">少</div>
+    <span class="name">写书的少年</span>
+    <div class="actions">
+      <span>⚙️</span><span>➕</span><span>🔔</span><span>🔗</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ========== Main ========== -->
+<div class="main">
+  <!-- Top Bar -->
+  <header class="topbar">
+    <h1>工作台</h1>
+    <div class="search-box">
+      🔍 <input placeholder="搜索作品 / 章节 / 人物 / 资料">
+    </div>
+    <div class="topbar-icons">
+      <div class="icon-btn">🔔<span class="dot"></span></div>
+      <div class="icon-btn">❓</div>
+      <div class="top-avatar"></div>
+    </div>
+  </header>
+
+  <div class="content-scroll">
+    <!-- Center Content -->
+    <div class="content-main">
+      <!-- Welcome -->
+      <div class="welcome">
+        <h2>下午好，写书的少年 👋</h2>
+        <p>专注创作的每一天，终将成就你的故事。</p>
+      </div>
+
+      <!-- Novel Card -->
+      <div class="novel-card">
+        <div class="novel-cover"></div>
+        <div class="novel-info">
+          <div class="title-row">
+            <h3>《星陨纪元》</h3>
+            <span class="status">连载中</span>
+          </div>
+          <div class="tags">
+            <span>奇幻</span><span>史诗</span><span>冒险</span>
+          </div>
+          <div class="meta">最后更新：2024-05-20 14:30</div>
+          <div class="desc">在星际陨落的时代，世界分崩离析，魔法与机械共存。少年从边陲小镇出发，踏上寻找真相与拯救世界的旅程。</div>
+          <div class="novel-actions">
+            <button class="btn btn-primary">▶ 继续创作</button>
+            <button class="btn btn-ghost">···</button>
+          </div>
+        </div>
+        <div class="novel-stats">
+          <div class="stat-highlight">总字数</div>
+          <div style="display:flex;align-items:center;gap:16px">
+            <div>
+              <div style="font-size:24px;font-weight:700">326,782<small style="font-size:12px;color:var(--gray-400)">字</small></div>
+              <div style="font-size:11px;color:var(--gray-400)">本月新增 <span style="color:var(--primary)">48,652</span> 字</div>
+            </div>
+            <div class="progress-ring">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="28" fill="none" stroke="#e5e7eb" stroke-width="5"/>
+                <circle cx="32" cy="32" r="28" fill="none" stroke="#3b82f6" stroke-width="5"
+                  stroke-dasharray="176" stroke-dashoffset="62" stroke-linecap="round"/>
+              </svg>
+              <div class="ring-text">65%</div>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-item"><div class="val">32 <small>章</small></div><div class="label">章节数</div></div>
+            <div class="stat-item"><div class="val">18 <small>位</small></div><div class="label">人物角色</div></div>
+            <div class="stat-item"><div class="val">126 <small>天</small></div><div class="label">创作天数</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h4>快捷入口</h4>
+        <div class="action-grid">
+          <div class="action-btn"><div class="action-icon">📝</div>新建章节</div>
+          <div class="action-btn"><div class="action-icon">📑</div>新建大纲</div>
+          <div class="action-btn"><div class="action-icon">👤</div>新建人物</div>
+          <div class="action-btn"><div class="action-icon">📒</div>新建笔记</div>
+          <div class="action-btn"><div class="action-icon">🤖</div>AI 助手</div>
+          <div class="action-btn"><div class="action-icon">📥</div>导入文稿</div>
+        </div>
+      </div>
+
+      <!-- Chapter List + Stats -->
+      <div class="content-bottom">
+        <div class="panel" style="flex:1.2">
+          <div class="panel-tabs">
+            <div class="panel-tab active">章节列表</div>
+            <div class="panel-tab">大纲列表</div>
+            <div class="panel-tab">灵感笔记</div>
+            <div class="panel-tab">资料库</div>
+            <span class="panel-extra">查看全部章节 ›</span>
+          </div>
+          <table class="chapter-table">
+            <thead>
+              <tr><th>章节名</th><th>字数</th><th>更新时间</th><th>状态</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="chapter-name">第1章 边陲小镇的少年</td>
+                <td>3,782</td>
+                <td>2024-05-18 10:21</td>
+                <td><span class="status-badge published">已发布</span></td>
+                <td class="actions-cell"><span>···</span></td>
+              </tr>
+              <tr>
+                <td class="chapter-name">第2章 星陨之夜</td>
+                <td>5,612</td>
+                <td>2024-05-18 14:32</td>
+                <td><span class="status-badge published">已发布</span></td>
+                <td class="actions-cell"><span>···</span></td>
+              </tr>
+              <tr>
+                <td class="chapter-name">第3章 神秘的来客</td>
+                <td>4,256</td>
+                <td>2024-05-19 09:15</td>
+                <td><span class="status-badge published">已发布</span></td>
+                <td class="actions-cell"><span>···</span></td>
+              </tr>
+              <tr>
+                <td class="chapter-name">第4章 离开的决定</td>
+                <td>6,398</td>
+                <td>2024-05-19 16:47</td>
+                <td><span class="status-badge published">已发布</span></td>
+                <td class="actions-cell"><span>···</span></td>
+              </tr>
+              <tr>
+                <td class="chapter-name">第5章 穿越迷雾森林</td>
+                <td>7,981</td>
+                <td>2024-05-20 14:30</td>
+                <td><span class="status-badge writing">草稿中</span></td>
+                <td class="actions-cell"><span>···</span></td>
+              </tr>
+              <tr>
+                <td class="chapter-name">第6章 废弃的遗迹</td>
+                <td>0</td>
+                <td>-</td>
+                <td><span class="status-badge draft">未开始</span></td>
+                <td class="actions-cell"><span>···</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel stats-panel" style="flex:0.8">
+          <div class="stats-header">
+            <h4>写作统计</h4>
+            <span class="period">近7天 ▾</span>
+          </div>
+          <div class="stats-big-number">12,435<small>字</small></div>
+          <div class="stats-change up">较前7天 ▲ 23.5%</div>
+          <div class="stats-chart">
+            <canvas id="statsChart"></canvas>
+          </div>
+          <div class="stats-footer">
+            <div class="sf-item"><div class="sf-val">1,776</div><div class="sf-label">平均字数/天</div></div>
+            <div class="sf-item"><div class="sf-val">7</div><div class="sf-label">写作天数</div></div>
+            <div class="sf-item"><div class="sf-val">326,782</div><div class="sf-label">累计字数</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="content-right">
+      <!-- Calendar -->
+      <div class="right-card">
+        <div class="card-header">
+          <span class="card-title">创作日历</span>
+        </div>
+        <div class="calendar-month">
+          <span>‹</span>
+          <span>2024年5月</span>
+          <span>›</span>
+        </div>
+        <div class="calendar-grid">
+          <div class="day-header">一</div><div class="day-header">二</div><div class="day-header">三</div>
+          <div class="day-header">四</div><div class="day-header">五</div><div class="day-header">六</div>
+          <div class="day-header">日</div>
+          <div class="day other-month">29</div><div class="day other-month">30</div>
+          <div class="day">1</div><div class="day">2</div><div class="day">3</div><div class="day">4</div><div class="day">5</div>
+          <div class="day has-write">6</div><div class="day has-write">7</div><div class="day has-write">8</div>
+          <div class="day has-write">9</div><div class="day has-write">10</div><div class="day">11</div><div class="day">12</div>
+          <div class="day has-write">13</div><div class="day has-write">14</div><div class="day has-write">15</div>
+          <div class="day has-write">16</div><div class="day has-write">17</div><div class="day has-write">18</div><div class="day has-write">19</div>
+          <div class="day today">20</div><div class="day">21</div><div class="day">22</div>
+          <div class="day">23</div><div class="day">24</div><div class="day">25</div><div class="day">26</div>
+          <div class="day">27</div><div class="day">28</div><div class="day">29</div>
+          <div class="day">30</div><div class="day">31</div>
+          <div class="day other-month">1</div><div class="day other-month">2</div>
+        </div>
+      </div>
+
+      <!-- Goal -->
+      <div class="right-card">
+        <div class="card-header">
+          <span class="card-title">创作目标</span>
+          <span class="card-link">编辑</span>
+        </div>
+        <div class="goal-target">
+          <span class="goal-label2">本月目标</span>
+        </div>
+        <div class="goal-target">
+          <span class="goal-num">80,000 <small>字</small></span>
+        </div>
+        <div class="goal-bar"><div class="fill" style="width:60%"></div></div>
+        <div class="goal-detail">
+          <span>48,652 / 80,000</span>
+          <span>60%</span>
+        </div>
+        <div class="goal-remaining">剩余 31,348 字，预计还需 11 天完成</div>
+      </div>
+
+      <!-- Notes -->
+      <div class="right-card">
+        <div class="card-header">
+          <span class="card-title">最新笔记</span>
+          <span class="card-link">查看全部</span>
+        </div>
+        <div class="note-item">
+          <div class="note-dot blue"></div>
+          <div class="note-content">
+            <div class="note-title">关于星陨能量的设定</div>
+            <div class="note-time">2024-05-20 11:23</div>
+          </div>
+        </div>
+        <div class="note-item">
+          <div class="note-dot green"></div>
+          <div class="note-content">
+            <div class="note-title">主角身世的结案整理</div>
+            <div class="note-time">2024-05-19 18:45</div>
+          </div>
+        </div>
+        <div class="note-item">
+          <div class="note-dot purple"></div>
+          <div class="note-content">
+            <div class="note-title">迷雾森林的地理环境描写</div>
+            <div class="note-time">2024-05-19 09:12</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity -->
+      <div class="right-card">
+        <div class="card-header">
+          <span class="card-title">协作动态</span>
+          <span class="card-link">查看全部</span>
+        </div>
+        <div class="activity-item">
+          <div class="activity-avatar">雨</div>
+          <div>
+            <div class="activity-text">编辑者（小雨）修改了 <span class="highlight">第3章 神秘的来客</span></div>
+            <div class="activity-time">2小时前</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
